@@ -1,6 +1,6 @@
 # Treeco
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-AGPL--v3-red.svg)](https://github.com/TheoGuyard/treeco/blob/main/LICENSE)
 [![C++20](https://img.shields.io/badge/C++-20-blue.svg)](https://isocpp.org/)
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 
@@ -32,4 +32,4 @@ For any troubleshooting during installation, please open an [issue](https://gith
 
 ## License
 
-Treeco is distributed under the [MIT License](LICENSE).
+Treeco is distributed under the [AGPL v3 license](LICENSE).
