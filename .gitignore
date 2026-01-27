@@ -2,7 +2,9 @@
 .vscode
 
 # C++
-build/
+bin
+build
+lib
 
 # python
 build/

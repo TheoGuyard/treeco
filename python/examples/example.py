@@ -1,5 +1,6 @@
 import numpy as np
-from treeco import Tsp, LDTree, SplitScoring
+from treeco import LDTree
+from treeco.problem import Tsp
 
 # Create a TSP problem with 4 cities
 problem = Tsp(num_cities=4)
@@ -7,12 +8,15 @@ problem = Tsp(num_cities=4)
 # Extract all possible feasible points
 points = problem.get_feasible_set()
 
+# Extract the cost vector domain
+domain = problem.get_cost_domain()
+
 # Build a LDTree policy for this problem
-policy = LDTree(points)
+policy = LDTree(points, domain)
 policy.build(verbose=True)
 
 policy = LDTree(points)
-policy.build(verbose=True, split_scoring=SplitScoring.minmax)
+policy.build(verbose=True)
 
 
 # Print the tree structure
