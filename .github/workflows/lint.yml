@@ -1,29 +1,38 @@
 name: Lint
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
-  run:
-    strategy:
-      matrix:
-        python: ['3.9']
-        platform: [ubuntu-latest]
-    runs-on: ${{ matrix.platform }}
+  lint-cpp:
+    runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python }}
-    - name: Set up MPI
-      uses: mpi4py/setup-mpi@v1
-    - name: Install dependencies
-      run: |
-        cd python
-        python -m pip install --upgrade pip
-        python -m pip install -U .[dev]
-    - name: Lint
-      run: |
-        flake8 treeco
-        flake8 examples
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-17
+          sudo ln -sf /usr/bin/clang-format-17 /usr/bin/clang-format
+      - name: Lint
+        run: |
+          cd cpp
+          clang-format --dry-run --Werror $(find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h")
+
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.8"
+      - name: Install dependencies
+        run: |
+          cd python
+          python -m pip install --upgrade pip
+          python -m pip install -U .[dev]
+      - name: Lint
+        run: |
+          flake8 .

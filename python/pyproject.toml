@@ -3,7 +3,7 @@ requires = ["scikit-build-core>=0.5", "pybind11>=2.10"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
-cmake.source-dir = ".."
+cmake.source-dir = "../cpp"
 cmake.build-type = "Release"
 cmake.args = [
     "-DTREECO_BUILD_EXEC=OFF",
