@@ -1,24 +1,15 @@
 [build-system]
-requires = ["scikit-build-core>=0.5", "pybind11>=2.10"]
+requires = ["pybind11", "setuptools>=61", "scikit-build-core", "wheel"]
 build-backend = "scikit_build_core.build"
-
-[tool.scikit-build]
-cmake.source-dir = "../cpp"
-cmake.build-type = "Release"
-cmake.args = [
-    "-DTREECO_BUILD_EXEC=OFF",
-    "-DTREECO_BUILD_TESTS=OFF",
-    "-DTREECO_BUILD_EXAMPLES=OFF",
-    "-DTREECO_BUILD_PYTHON=ON"
-]
-wheel.packages = ["treeco"]
 
 [project]
 name = "treeco"
 version = "0.0.1"
 description = "Treeco - Linear Decision Tree Policies for Combinatorial Optimization"
-readme = "../README.md"
-authors = [{name = "Théo Guyard", email = "theo.guyard.job@gmail.com"}]
+readme = "README.md"
+authors = [
+    {name = "Théo Guyard", email = "guyard.theo@gmail.com"}
+]
 requires-python = ">=3.8"
 dependencies = ["numpy"]
 
@@ -28,3 +19,6 @@ dev = ["black", "flake8", "pytest"]
 [project.urls]
 "Homepage" = "https://github.com/TheoGuyard/treeco"
 "Bug Reports" = "https://github.com/TheoGuyard/treeco/issues"
+
+[tool.scikit-build]
+wheel.packages = ["treeco"]

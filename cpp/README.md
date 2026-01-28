@@ -20,17 +20,16 @@ make                        # Build
 
 The following options are available for the `cmake` command during build:
 
-| Option                  | Default | Description               |
-| ----------------------- | ------- | ------------------------- |
-| `TREECO_BUILD_EXEC`     | `ON`    | Build the main executable |
-| `TREECO_BUILD_TESTS`    | `ON`    | Build tests executable    |
-| `TREECO_BUILD_EXAMPLES` | `ON`    | Build examples executable |
-
+| Option                  | Options     | Default | Description               |
+| ----------------------- | ------------| ------- | ------------------------- |
+| `TREECO_BUILD_EXEC`     | `ON`/`OFF`  | `ON`    | Build the main executable |
+| `TREECO_BUILD_TESTS`    | `ON`/`OFF`  | `ON`    | Build tests executable    |
+| `TREECO_BUILD_EXAMPLES` | `ON`/`OFF`  | `ON`    | Build examples executable |
 and can be used as `cmake -DTREECO_BUILD_TESTS=OFF ..`.
 
-After building, `treeco` library is available in the `cpp/lib` folder. All executables are located in the `cpp/bin` folder:
+After building, the static `libtreeco.a` library is available in the `build` folder along with the following executables:
 
-* `./treeco` to call the library from the command line (use the `--help` flag to obtain usage instructions).
+* `./main` to call treeco from the command line (use the `--help` flag to obtain usage instructions).
 * `./tests` to run unit tests
 * `./examples` to run the example code
 

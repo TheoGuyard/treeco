@@ -44,9 +44,11 @@ void Tree::synthetize(const Dynprog &dynprog, const TreeParams &params) {
 
 #ifdef TREECO_BUILD_PYTHON
     // Propagate keyboard interrupts from python
-    py::gil_scoped_acquire acquire;
-    if (PyErr_CheckSignals() != 0) {
-      throw py::error_already_set();
+    if (Py_IsInitialized()) {
+      py::gil_scoped_acquire acquire;
+      if (PyErr_CheckSignals() != 0) {
+        throw py::error_already_set();
+      }
     }
 #endif
   }

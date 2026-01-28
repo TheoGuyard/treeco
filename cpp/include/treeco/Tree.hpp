@@ -128,13 +128,13 @@ public:
   const Node &node(Index id) const { return nodes_.at(id); }
 
   /// Get the number of nodes
-  const Index size() const { return size_; }
+  Index size() const { return size_; }
 
   /// Get the maximum width (nodes at any level)
-  const Index width() const { return width_; }
+  Index width() const { return width_; }
 
   /// Get the maximum depth
-  const Index depth() const { return depth_; }
+  Index depth() const { return depth_; }
 
   /// Get construction statistics
   const TreeStats &stats() const { return stats_; }

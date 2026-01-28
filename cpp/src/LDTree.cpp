@@ -107,9 +107,9 @@ void LDTree::flatten(const std::string filepath, const std::string doc,
 
   // Main function
   if (benchmarkMode) {
-    generateBenchmarkCode(out, dimPoints, doc);
+    generateBenchmarkCode(out, doc);
   } else {
-    generateNormalCode(out, dimPoints, doc);
+    generateNormalCode(out, doc);
   }
   out << "\n";
 
@@ -118,7 +118,7 @@ void LDTree::flatten(const std::string filepath, const std::string doc,
   file << out.str();
 }
 
-void LDTree::generateNormalCode(std::ostringstream &out, int dim,
+void LDTree::generateNormalCode(std::ostringstream &out,
                                 const std::string &doc) const {
   out << "int main(int argc, char **argv) {\n";
   out << "    if (argc != DIM + 1) {\n";
@@ -143,7 +143,7 @@ void LDTree::generateNormalCode(std::ostringstream &out, int dim,
   out << "}\n";
 }
 
-void LDTree::generateBenchmarkCode(std::ostringstream &out, int dim,
+void LDTree::generateBenchmarkCode(std::ostringstream &out,
                                    const std::string &doc) const {
   out << "int main(int argc, char **argv) {\n";
   out << "    if (argc != 3) {\n";
