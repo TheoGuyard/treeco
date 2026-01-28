@@ -9,11 +9,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up clang-format
+      - name: Set up dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-format-17
-          sudo ln -sf /usr/bin/clang-format-17 /usr/bin/clang-format
+          sudo apt-get install -y clang-format-21
+          sudo ln -sf /usr/bin/clang-format-21 /usr/bin/clang-format
       - name: Lint
         run: |
           cd cpp
@@ -28,11 +28,11 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: "3.8"
-      - name: Set up flake8
+      - name: Set up dependencies
         run: |
-          cd python
           python -m pip install --upgrade pip
           python -m pip install -U flake8
       - name: Lint
         run: |
+          cd python
           flake8 .
