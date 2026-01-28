@@ -45,7 +45,7 @@ RealVector Maxcut::sampleCost(Index seed) const {
 
   // Sample random vertices positions in the unit 2d square
   std::vector<std::pair<double, double>> positions(numVertices_);
-  for (int i = 0; i < numVertices_; ++i) {
+  for (Index i = 0; i < numVertices_; ++i) {
     positions[i] = {unif(gen), unif(gen)};
   }
 

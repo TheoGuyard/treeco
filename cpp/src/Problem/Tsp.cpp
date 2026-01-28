@@ -52,7 +52,7 @@ RealVector Tsp::sampleCost(Index seed) const {
 
   // Sample random city positions in the unit 2d square
   std::vector<std::pair<double, double>> positions(numCities_);
-  for (int i = 0; i < numCities_; ++i) {
+  for (Index i = 0; i < numCities_; ++i) {
     positions[i] = {unif(gen), unif(gen)};
   }
 

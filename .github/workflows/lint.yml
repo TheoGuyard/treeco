@@ -9,30 +9,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up clang-format
+      - name: Set up dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-format-17
-          sudo ln -sf /usr/bin/clang-format-17 /usr/bin/clang-format
+          sudo apt-get install -y clang-format-20
+          sudo ln -sf /usr/bin/clang-format-20 /usr/bin/clang-format
       - name: Lint
         run: |
           cd cpp
-          clang-format --dry-run --Werror $(find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h")
+          clang-format --dry-run --Werror --Wno-error=unknown $(find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h")
 
   lint-python:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
           python-version: "3.8"
-      - name: Install dependencies
+      - name: Set up dependencies
         run: |
-          cd python
           python -m pip install --upgrade pip
-          python -m pip install -U .[dev]
+          python -m pip install -U flake8
       - name: Lint
         run: |
+          cd python
           flake8 .

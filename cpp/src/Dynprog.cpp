@@ -123,9 +123,11 @@ void Dynprog::initPositions() {
 
 #ifdef TREECO_BUILD_PYTHON
       // Propagate keyboard interrupts from python
-      py::gil_scoped_acquire acquire;
-      if (PyErr_CheckSignals() != 0) {
-        throw py::error_already_set();
+      if (Py_IsInitialized()) {
+        py::gil_scoped_acquire acquire;
+        if (PyErr_CheckSignals() != 0) {
+          throw py::error_already_set();
+        }
       }
 #endif
 
@@ -237,14 +239,6 @@ State Dynprog::createState(Index parentId, Index splitId, Relation cutDir) {
   feasibility_->add(child.region.cuts());
   for (Index faceId : parent.faceIds) {
 
-#ifdef TREECO_BUILD_PYTHON
-    // Propagate keyboard interrupts from python
-    py::gil_scoped_acquire acquire;
-    if (PyErr_CheckSignals() != 0) {
-      throw py::error_already_set();
-    }
-#endif
-
     bool intersect = checkChildFace(parentId, splitId, cutDir, faceId, true);
 
     if (intersect) {
@@ -281,8 +275,6 @@ State Dynprog::createState(Index parentId, Index splitId, Relation cutDir) {
 void Dynprog::buildState(Index stateId, Index kSplits) {
 
   stats_.numStatesBuilt++;
-
-  Index stateFaceCount = states_[stateId].faceIds.size();
 
   // ----- Initialize building process ----- //
 
@@ -447,9 +439,11 @@ void Dynprog::evaluateState(Index stateId, Index kSplits) {
 
 #ifdef TREECO_BUILD_PYTHON
   // Propagate keyboard interrupts from python
-  py::gil_scoped_acquire acquire;
-  if (PyErr_CheckSignals() != 0) {
-    throw py::error_already_set();
+  if (Py_IsInitialized()) {
+    py::gil_scoped_acquire acquire;
+    if (PyErr_CheckSignals() != 0) {
+      throw py::error_already_set();
+    }
   }
 #endif
 

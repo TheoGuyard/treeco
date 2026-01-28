@@ -151,9 +151,9 @@ private:
   LDTreeStats stats_; // Build statistics
 
   // Code generation helpers
-  void generateNormalCode(std::ostringstream &out, int dim,
+  void generateNormalCode(std::ostringstream &out,
                           const std::string &doc) const;
-  void generateBenchmarkCode(std::ostringstream &out, int dim,
+  void generateBenchmarkCode(std::ostringstream &out,
                              const std::string &doc) const;
   void generateNodeCode(Index nodeIndex, std::ostringstream &out,
                         int indent = 1) const;
