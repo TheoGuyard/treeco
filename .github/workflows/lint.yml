@@ -17,7 +17,7 @@ jobs:
       - name: Lint
         run: |
           cd cpp
-          clang-format --dry-run --Werror $(find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h")
+          clang-format --dry-run --Werror --Wno-error=unknown $(find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h")
 
   lint-python:
     runs-on: ubuntu-latest
