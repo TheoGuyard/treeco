@@ -1,8 +1,5 @@
 # Treeco
 
-[![License: MIT](https://img.shields.io/badge/License-AGPL--v3-red.svg)](https://github.com/TheoGuyard/treeco/blob/main/LICENSE)
-
-
 `treeco` is a library to build efficient decision policies for combinatorial optimization problems of the form:
 
 ```
@@ -57,3 +54,7 @@ queries 4 3
 ## Troubleshooting
 
 For any troubleshooting during installation, please open an [issue](https://github.com/TheoGuyard/treeco/issues) on the Github repository.
+
+## Licence
+
+`treeco` is released under the [AGPL-3.0](LICENSE) licence.
