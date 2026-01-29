@@ -2,35 +2,24 @@
 
 namespace treeco {
 
-Feasibility::Feasibility(const std::vector<TernaryVector> &pool,
-                         const Domain &fixedConstraints, double tolerance)
-    : pool_(pool), tolerance_(tolerance), env_(getGurobiEnv()), model_(env_) {
+Feasibility::Feasibility(const std::vector<TernaryVector>& pool, const Domain& fixedConstraints, double tolerance)
+  : pool_(pool), tolerance_(tolerance), env_(getGurobiEnv()), model_(env_) {
+  if (pool_.empty()) { throw std::invalid_argument("Pool cannot be empty"); }
 
-  if (pool_.empty()) {
-    throw std::invalid_argument("Pool cannot be empty");
+  for (const auto& p : pool_) {
+    if (p.size() != pool_[0].size()) { throw std::invalid_argument("Points must have the same dimension"); }
   }
 
-  for (const auto &p : pool_) {
-    if (p.size() != pool_[0].size()) {
-      throw std::invalid_argument("Points must have the same dimension");
-    }
+  for (const auto& [w, r, b] : fixedConstraints) {
+    if (w.size() != pool_[0].size()) { throw std::invalid_argument("Fixed cuts dimension mismatch."); }
   }
 
-  for (const auto &[w, r, b] : fixedConstraints) {
-    if (w.size() != pool_[0].size()) {
-      throw std::invalid_argument("Fixed cuts dimension mismatch.");
-    }
-  }
-
-  if (tolerance_ < 1e-8) {
-    throw std::invalid_argument("Tolerance must be >= 1e-8.");
-  }
+  if (tolerance_ < 1e-8) { throw std::invalid_argument("Tolerance must be >= 1e-8."); }
 
   build(fixedConstraints);
 }
 
-void Feasibility::build(const Domain &fixedConstraints) {
-
+void Feasibility::build(const Domain& fixedConstraints) {
   Index numPool = pool_.size();
   Index dimPool = pool_[0].size();
   double slacksUb = 10.0 * tolerance_;
@@ -41,47 +30,37 @@ void Feasibility::build(const Domain &fixedConstraints) {
   // Variables x (dimension of the space)
   varx_.reserve(dimPool);
   for (Index j = 0; j < dimPool; ++j) {
-    varx_.emplace_back(
-        model_.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS));
+    varx_.emplace_back(model_.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS));
   }
 
   // Slack variables (to handle strict inequalities)
   vars_.reserve(numPool);
-  for (Index i = 0; i < numPool; ++i) {
-    vars_.emplace_back(model_.addVar(0.0, slacksUb, 0.0, GRB_CONTINUOUS));
-  }
+  for (Index i = 0; i < numPool; ++i) { vars_.emplace_back(model_.addVar(0.0, slacksUb, 0.0, GRB_CONTINUOUS)); }
 
   // Add slacks to the objective
-  for (Index i = 0; i < numPool; ++i) {
-    objexpr_ += vars_[i];
-  }
+  for (Index i = 0; i < numPool; ++i) { objexpr_ += vars_[i]; }
 
   // Precompute linear expressions in the pool of cuts
   linexprs_.reserve(numPool);
   for (Index i = 0; i < numPool; ++i) {
     GRBLinExpr linexpr_ = 0.0;
-    for (Index j = 0; j < dimPool; ++j) {
-      linexpr_ += pool_[i][j] * varx_[j];
-    }
+    for (Index j = 0; j < dimPool; ++j) { linexpr_ += pool_[i][j] * varx_[j]; }
     linexpr_ += vars_[i];
     linexprs_.emplace_back(linexpr_);
   }
 
   // Add fixed constrains
   varsFixed_ = std::vector<GRBVar>();
-  for (const auto &[a, b, r] : fixedConstraints) {
-
+  for (const auto& [a, b, r] : fixedConstraints) {
     if (r == Relation::RF) {
       throw std::runtime_error("RF relation encountered in fixed constraints.");
     } else if (r == Relation::RT) {
-      continue; // Do not add fixed constraints always satisfied
+      continue;  // Do not add fixed constraints always satisfied
     }
 
     // Linear expressions for the fixed constraints
     GRBLinExpr linexprFixed = b;
-    for (Index j = 0; j < dimPool; ++j) {
-      linexprFixed += a[j] * varx_[j];
-    }
+    for (Index j = 0; j < dimPool; ++j) { linexprFixed += a[j] * varx_[j]; }
 
     // Slack for the fixed constraints if needed
     if (r == Relation::LT) {
@@ -123,10 +102,9 @@ void Feasibility::build(const Domain &fixedConstraints) {
   model_.set("Method", "1");
 
   // Initialize the counts and reduced version of relations
-  const std::unordered_map<Relation, Index> initialCounts = {
-      {Relation::RT, 0}, {Relation::LT, 0}, {Relation::LE, 0},
-      {Relation::EQ, 0}, {Relation::GE, 0}, {Relation::GT, 0},
-      {Relation::RF, 0}};
+  const std::unordered_map<Relation, Index> initialCounts = {{Relation::RT, 0}, {Relation::LT, 0}, {Relation::LE, 0},
+                                                             {Relation::EQ, 0}, {Relation::GE, 0}, {Relation::GT, 0},
+                                                             {Relation::RF, 0}};
   relationsCounts_.resize(numPool, initialCounts);
   relationsReduce_.resize(numPool, Relation::RT);
 
@@ -134,53 +112,40 @@ void Feasibility::build(const Domain &fixedConstraints) {
   status_ = FeasibilityStatus::UNKNOWN;
 }
 
-void Feasibility::add(const Cut &cut) {
-  const auto &[i, r] = cut;
+void Feasibility::add(const Cut& cut) {
+  const auto& [i, r] = cut;
   relationsCounts_[i][r]++;
   if (relationsCounts_[i][r] == 1) {
     bool flag = reduce(i);
-    if (flag) {
-      update(i, true);
-    }
+    if (flag) { update(i, true); }
   }
 }
 
-void Feasibility::add(const std::set<Cut> &cuts) {
-  for (const auto &cut : cuts) {
-    add(cut);
-  }
+void Feasibility::add(const std::set<Cut>& cuts) {
+  for (const auto& cut : cuts) { add(cut); }
 }
 
-void Feasibility::remove(const Cut &cut) {
-  const auto &[i, r] = cut;
-  if (relationsCounts_[i][r] <= 0) {
-    throw std::runtime_error("Attempting to remove un-existing relation.");
-  }
+void Feasibility::remove(const Cut& cut) {
+  const auto& [i, r] = cut;
+  if (relationsCounts_[i][r] <= 0) { throw std::runtime_error("Attempting to remove un-existing relation."); }
   relationsCounts_[i][r]--;
   if (relationsCounts_[i][r] == 0) {
     bool flag = reduce(i);
-    if (flag) {
-      update(i, false);
-    }
+    if (flag) { update(i, false); }
   }
 }
 
-void Feasibility::remove(const std::set<Cut> &cuts) {
-  for (const auto &cut : cuts) {
-    remove(cut);
-  }
+void Feasibility::remove(const std::set<Cut>& cuts) {
+  for (const auto& cut : cuts) { remove(cut); }
 }
 
 bool Feasibility::reduce(Index i) {
-
   Relation previousRelation = relationsReduce_[i];
 
   std::vector<Relation> activeRelations;
   activeRelations.reserve(relationsCounts_[i].size());
-  for (const auto &[r, c] : relationsCounts_[i]) {
-    if (c > 0) {
-      activeRelations.push_back(r);
-    }
+  for (const auto& [r, c] : relationsCounts_[i]) {
+    if (c > 0) { activeRelations.push_back(r); }
   }
 
   relationsReduce_[i] = reduceRelations(activeRelations);
@@ -189,7 +154,6 @@ bool Feasibility::reduce(Index i) {
 }
 
 void Feasibility::update(Index i, bool isNew) {
-
   // New relation that must be applied to the i-th pool element of the system
   Relation r = relationsReduce_[i];
 
@@ -199,17 +163,14 @@ void Feasibility::update(Index i, bool isNew) {
   // system (hence the slack is properly set), and it is still feasible.
   // Otherwise, the feasibility of the new system is unknown.
   bool anyInfeasible =
-      std::find(relationsReduce_.begin(), relationsReduce_.end(),
-                Relation::RF) != relationsReduce_.end();
+      std::find(relationsReduce_.begin(), relationsReduce_.end(), Relation::RF) != relationsReduce_.end();
   if (anyInfeasible) {
     status_ = FeasibilityStatus::INFEASIBLE;
   } else if (status_ == FeasibilityStatus::FEASIBLE && !isNew) {
     double value = linexprs_[i].getValue();
     bool stillFeasible =
-        (((r == Relation::LT) && (value <= -tolerance_)) ||
-         ((r == Relation::LE) && (value <= 0.0)) ||
-         ((r == Relation::EQ) && (std::abs(value) <= tolerance_)) ||
-         ((r == Relation::GE) && (value >= 0.0)) ||
+        (((r == Relation::LT) && (value <= -tolerance_)) || ((r == Relation::LE) && (value <= 0.0)) ||
+         ((r == Relation::EQ) && (std::abs(value) <= tolerance_)) || ((r == Relation::GE) && (value >= 0.0)) ||
          ((r == Relation::GT) && (value >= tolerance_)) || (r == Relation::RT));
     if (stillFeasible) {
       status_ = FeasibilityStatus::FEASIBLE;
@@ -281,9 +242,7 @@ void Feasibility::update(Index i, bool isNew) {
 }
 
 bool Feasibility::check() {
-
   if (status_ == FeasibilityStatus::UNKNOWN) {
-
     model_.optimize();
     numSolve_++;
 
@@ -293,13 +252,13 @@ bool Feasibility::check() {
       status_ = FeasibilityStatus::FEASIBLE;
 
       // Check slacks feasibility according to tolerance_
-      for (const auto &slack : vars_) {
+      for (const auto& slack : vars_) {
         if (slack.get(GRB_DoubleAttr_X) < tolerance_) {
           status_ = FeasibilityStatus::INFEASIBLE;
           break;
         }
       }
-      for (const auto &slack : varsFixed_) {
+      for (const auto& slack : varsFixed_) {
         if (slack.get(GRB_DoubleAttr_X) < tolerance_) {
           status_ = FeasibilityStatus::INFEASIBLE;
           break;
@@ -317,4 +276,4 @@ bool Feasibility::check() {
   }
 }
 
-} // namespace treeco
+}  // namespace treeco

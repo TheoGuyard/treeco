@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import List
 
 class Exploration(Enum):
     """
@@ -109,3 +110,5 @@ class DynprogStats:
     num_states_pruned: int
     num_feasibility_checks: int
     optimal_depth: int
+
+DynprogLogs = List[DynprogStats]

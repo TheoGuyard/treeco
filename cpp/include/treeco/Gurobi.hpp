@@ -23,11 +23,11 @@
  *
  * @return Reference to the shared Gurobi environment
  */
-inline GRBEnv &getGurobiEnv() {
+inline GRBEnv& getGurobiEnv() {
   static std::once_flag flag;
-  static GRBEnv *env = nullptr;
+  static GRBEnv* env = nullptr;
 
-  const char *slurm_cpus = std::getenv("SLURM_CPUS_PER_TASK");
+  const char* slurm_cpus = std::getenv("SLURM_CPUS_PER_TASK");
   int nthreads = (slurm_cpus != nullptr) ? std::stoi(slurm_cpus) : 0;
 
   std::call_once(flag, [nthreads] {
@@ -40,4 +40,4 @@ inline GRBEnv &getGurobiEnv() {
   return *env;
 }
 
-#endif // TREECO_GUROBI_HPP
+#endif  // TREECO_GUROBI_HPP

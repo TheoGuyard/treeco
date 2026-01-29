@@ -22,8 +22,8 @@ sys.modules[__name__ + ".tree"] = tree
 sys.modules[__name__ + ".ldtree"] = ldtree
 sys.modules[__name__ + ".io"] = io
 
-# Top-level imports
-LDTree = _treeco.ldtree.LDTree
+# Top-level imports LDTree
+from treeco.ldtree import LDTree
 
 __all__ = [
     "LDTree",

@@ -23,15 +23,15 @@ public:
    * @brief Construct from an explicit feasible set.
    * @param feasibleSet Vector of all feasible binary solutions
    */
-  explicit Explicit(const std::vector<BinaryVector> &feasibleSet);
+  explicit Explicit(const std::vector<BinaryVector>& feasibleSet);
 
   /// Get all feasible solutions
   std::vector<BinaryVector> getFeasibleSet() const override;
 
 private:
-  std::vector<BinaryVector> feasibleSet_; // The feasible solutions
+  std::vector<BinaryVector> feasibleSet_;  // The feasible solutions
 };
 
-} // namespace treeco
+}  // namespace treeco
 
-#endif // TREECO_PROBLEM_EXPLICIT_HPP
+#endif  // TREECO_PROBLEM_EXPLICIT_HPP

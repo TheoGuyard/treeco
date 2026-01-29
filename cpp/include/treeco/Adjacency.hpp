@@ -9,10 +9,10 @@
 #ifndef TREECO_ADJACENCY_HPP
 #define TREECO_ADJACENCY_HPP
 
+#include <gurobi_c++.h>
+
 #include <stdexcept>
 #include <vector>
-
-#include <gurobi_c++.h>
 
 #include "treeco/Gurobi.hpp"
 #include "treeco/Types.hpp"
@@ -44,7 +44,7 @@ public:
    * @brief Construct an adjacency checker for a point pool.
    * @param pool Points in {-1,+1}^n to check adjacency from
    */
-  explicit Adjacency(const std::vector<SimplexVector> &pool);
+  explicit Adjacency(const std::vector<SimplexVector>& pool);
 
   /// Destructor
   ~Adjacency() = default;
@@ -61,23 +61,23 @@ public:
   Index getNumSolve() const { return numSolve_; }
 
 private:
-  const std::vector<SimplexVector> &pool_; // Reference to the point pool
-  Index numSolve_ = 0;                     // LP solve counter
+  const std::vector<SimplexVector>& pool_;  // Reference to the point pool
+  Index numSolve_ = 0;                      // LP solve counter
 
-  GRBEnv env_;                   // Gurobi environment
-  GRBModel model_;               // LP model
-  std::vector<GRBVar> var1_;     // Variables for coefficients
-  std::vector<GRBVar> var2_;     // Variables for coefficients
-  std::vector<GRBConstr> cstr1_; // Constraint set 1
-  GRBConstr cstr2_;              // Constraint 2
-  GRBConstr cstr3_;              // Constraint 3
-  std::vector<GRBConstr> cstr4_; // Constraint set 4
+  GRBEnv env_;                    // Gurobi environment
+  GRBModel model_;                // LP model
+  std::vector<GRBVar> var1_;      // Variables for coefficients
+  std::vector<GRBVar> var2_;      // Variables for coefficients
+  std::vector<GRBConstr> cstr1_;  // Constraint set 1
+  GRBConstr cstr2_;               // Constraint 2
+  GRBConstr cstr3_;               // Constraint 3
+  std::vector<GRBConstr> cstr4_;  // Constraint set 4
 
   void build();
   void add(Index i, Index j);
   void remove(Index i, Index j);
 };
 
-} // namespace treeco
+}  // namespace treeco
 
-#endif // TREECO_ADJACENCY_HPP
+#endif  // TREECO_ADJACENCY_HPP

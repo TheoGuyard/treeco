@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <treeco/Geometry.hpp>
 
 using namespace treeco;

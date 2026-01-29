@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <treeco/Adjacency.hpp>
 #include <treeco/Geometry.hpp>
 #include <treeco/Problem/Tsp.hpp>

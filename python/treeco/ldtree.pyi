@@ -70,6 +70,7 @@ class LDTree:
         self,
         verbose: bool = True,
         log_interval: float = 5.0,
+        log_save: bool = True,
         time_limit: float = float("inf"),
         tolerance: float = 1e-8,
         deduplicate: bool = True,
@@ -91,6 +92,7 @@ class LDTree:
         Args:
             verbose: Enable verbose logging output
             log_interval: Logging interval in seconds
+            log_save: Save logs during dynamic programming
             time_limit: Maximum build time in seconds
             tolerance: Numerical tolerance for equality comparisons
             deduplicate: Remove duplicate feasible points before building

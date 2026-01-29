@@ -79,9 +79,9 @@ public:
   std::pair<Index, Index> indexToEdge(Index idx) const;
 
 private:
-  Index numVertices_; // Number of vertices
+  Index numVertices_;  // Number of vertices
 };
 
-} // namespace treeco
+}  // namespace treeco
 
-#endif // TREECO_PROBLEM_MAXCUT_HPP
+#endif  // TREECO_PROBLEM_MAXCUT_HPP

@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <treeco/Dynprog.hpp>
 #include <treeco/Geometry.hpp>
 #include <treeco/Problem/Maxcut.hpp>
@@ -116,9 +117,8 @@ TEST_F(DynprogTest, DifferentScoringStrategies) {
   Voronoi voronoi(smallPoints);
   voronoi.build();
 
-  std::vector<SplitScoring> strategies = {
-      SplitScoring::VARIANCE, SplitScoring::ENTROPY, SplitScoring::MINMAX,
-      SplitScoring::NONE, SplitScoring::RANDOM};
+  std::vector<SplitScoring> strategies = {SplitScoring::VARIANCE, SplitScoring::ENTROPY, SplitScoring::MINMAX,
+                                          SplitScoring::NONE, SplitScoring::RANDOM};
 
   Index baseDepth = MAX_DEPTH;
   for (auto strategy : strategies) {
@@ -129,9 +129,7 @@ TEST_F(DynprogTest, DifferentScoringStrategies) {
     dp.run(params);
     Index depth = dp.stats().optimalDepth;
 
-    if (baseDepth == MAX_DEPTH) {
-      baseDepth = depth;
-    }
+    if (baseDepth == MAX_DEPTH) { baseDepth = depth; }
     // All strategies should find the same optimal depth
     EXPECT_EQ(depth, baseDepth);
   }
@@ -213,7 +211,7 @@ TEST_F(DynprogTest, TimeLimit) {
   Dynprog dp(voronoi);
   DynprogParams params;
   params.verbose = false;
-  params.timeLimit = 0.001; // Very short time limit
+  params.timeLimit = 0.001;  // Very short time limit
 
   // Should return without hanging
   dp.run(params);
@@ -232,7 +230,7 @@ TEST_F(DynprogTest, StatisticsPopulated) {
 
   dp.run(params);
 
-  const DynprogStats &stats = dp.stats();
+  const DynprogStats& stats = dp.stats();
   EXPECT_GT(stats.numStates, 0);
   EXPECT_GT(stats.numStatesClosed, 0);
   EXPECT_GE(stats.runTime, 0.0);
@@ -322,7 +320,7 @@ TEST_F(DynprogTest, RootIdAccessor) {
   EXPECT_NE(rootId, INVALID_INDEX);
 
   // Should be able to access root state
-  const State &rootState = dp.state(rootId);
+  const State& rootState = dp.state(rootId);
   EXPECT_EQ(rootState.depth(), 0);
 }
 

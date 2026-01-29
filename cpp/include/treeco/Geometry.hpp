@@ -33,13 +33,13 @@ namespace treeco {
  * defining constraints and branching decisions in the decision tree.
  */
 enum class Relation : int8_t {
-  LT = -2, // <a,c> + b < 0 (strict less than)
-  LE = -1, // <a,c> + b <= 0 (less than or equal)
-  EQ = 0,  // <a,c> + b = 0 (equal)
-  GE = 1,  // <a,c> + b >= 0 (greater than or equal)
-  GT = 2,  // <a,c> + b > 0 (strict greater than)
-  RT = 10, // <a,c> + b <= +inf (always true, unconstrained)
-  RF = 20, // <a,c> + b >= +inf (always false, infeasible)
+  LT = -2,  // <a,c> + b < 0 (strict less than)
+  LE = -1,  // <a,c> + b <= 0 (less than or equal)
+  EQ = 0,   // <a,c> + b = 0 (equal)
+  GE = 1,   // <a,c> + b >= 0 (greater than or equal)
+  GT = 2,   // <a,c> + b > 0 (strict greater than)
+  RT = 10,  // <a,c> + b <= +inf (always true, unconstrained)
+  RF = 20,  // <a,c> + b >= +inf (always false, infeasible)
 };
 
 /**
@@ -49,22 +49,22 @@ enum class Relation : int8_t {
  */
 inline std::string relationTypeToString(Relation type) {
   switch (type) {
-  case Relation::LT:
-    return "LT";
-  case Relation::LE:
-    return "LE";
-  case Relation::EQ:
-    return "EQ";
-  case Relation::GE:
-    return "GE";
-  case Relation::GT:
-    return "GT";
-  case Relation::RT:
-    return "RT";
-  case Relation::RF:
-    return "RF";
-  default:
-    return "Unknown";
+    case Relation::LT:
+      return "LT";
+    case Relation::LE:
+      return "LE";
+    case Relation::EQ:
+      return "EQ";
+    case Relation::GE:
+      return "GE";
+    case Relation::GT:
+      return "GT";
+    case Relation::RT:
+      return "RT";
+    case Relation::RF:
+      return "RF";
+    default:
+      return "Unknown";
   }
 }
 
@@ -74,32 +74,22 @@ inline std::string relationTypeToString(Relation type) {
  * @return The corresponding Relation enum value
  * @throws std::invalid_argument if the string is not a valid relation
  */
-inline Relation stringToRelationType(const std::string &str) {
-  if (str == "LT")
-    return Relation::LT;
-  if (str == "LE")
-    return Relation::LE;
-  if (str == "EQ")
-    return Relation::EQ;
-  if (str == "GE")
-    return Relation::GE;
-  if (str == "GT")
-    return Relation::GT;
-  if (str == "RT")
-    return Relation::RT;
-  if (str == "RF")
-    return Relation::RF;
-  throw std::invalid_argument(
-      "Invalid relation type string: " + str +
-      ". Available options are: " + "LT, LE, EQ, GE, GT, RT, RF.");
+inline Relation stringToRelationType(const std::string& str) {
+  if (str == "LT") return Relation::LT;
+  if (str == "LE") return Relation::LE;
+  if (str == "EQ") return Relation::EQ;
+  if (str == "GE") return Relation::GE;
+  if (str == "GT") return Relation::GT;
+  if (str == "RT") return Relation::RT;
+  if (str == "RF") return Relation::RF;
+  throw std::invalid_argument("Invalid relation type string: " + str +
+                              ". Available options are: " + "LT, LE, EQ, GE, GT, RT, RF.");
 }
 
 /// Lookup table for reducing pairs of relations
 const std::map<std::set<Relation>, Relation> relationReductions = {
-    {{Relation::LT, Relation::LE}, Relation::LT},
-    {{Relation::LE, Relation::EQ}, Relation::EQ},
-    {{Relation::LE, Relation::GE}, Relation::EQ},
-    {{Relation::EQ, Relation::GE}, Relation::EQ},
+    {{Relation::LT, Relation::LE}, Relation::LT}, {{Relation::LE, Relation::EQ}, Relation::EQ},
+    {{Relation::LE, Relation::GE}, Relation::EQ}, {{Relation::EQ, Relation::GE}, Relation::EQ},
     {{Relation::GE, Relation::GT}, Relation::GT},
 };
 
@@ -130,11 +120,9 @@ inline Relation reduceRelationPair(Relation r1, Relation r2) {
  * @param relations Vector of relations to reduce
  * @return The reduced relation (RT if empty, RF if inconsistent)
  */
-inline Relation reduceRelations(const std::vector<Relation> &relations) {
-  if (relations.empty())
-    return Relation::RT;
-  return std::accumulate(std::next(relations.begin()), relations.end(),
-                         relations.front(), reduceRelationPair);
+inline Relation reduceRelations(const std::vector<Relation>& relations) {
+  if (relations.empty()) return Relation::RT;
+  return std::accumulate(std::next(relations.begin()), relations.end(), relations.front(), reduceRelationPair);
 }
 
 // ----------------------------------------------------------------------------
@@ -202,8 +190,8 @@ inline Domain nonPositiveOrthant(Index dim) {
  * Voronoi diagram's split pool) and the relation type defining the half-space.
  */
 struct Cut {
-  Index hid = INVALID_INDEX;   // Index of the normal vector in the split pool
-  Relation dir = Relation::RT; // Direction/relation of the cut
+  Index hid = INVALID_INDEX;    // Index of the normal vector in the split pool
+  Relation dir = Relation::RT;  // Direction/relation of the cut
 
   /**
    * @brief Construct a cut.
@@ -219,18 +207,18 @@ struct Cut {
   std::string toString() const;
 
   /// Check equality with another cut
-  bool operator==(const Cut &other) const;
+  bool operator==(const Cut& other) const;
 
   /// Check inequality with another cut
-  bool operator!=(const Cut &other) const;
+  bool operator!=(const Cut& other) const;
 
   /// Lexicographic ordering for use in ordered containers
-  bool operator<(const Cut &other) const;
+  bool operator<(const Cut& other) const;
 };
 
 /// Hasher functor for Cut objects (for use in unordered containers)
 struct CutHasher {
-  std::size_t operator()(const Cut &c) const { return c.hash(); }
+  std::size_t operator()(const Cut& c) const { return c.hash(); }
 };
 
 /**
@@ -240,7 +228,6 @@ struct CutHasher {
  * half-space boundary. The cone is the intersection of all these half-spaces.
  */
 struct Cone {
-
 public:
   /// Construct an empty cone (full space)
   Cone();
@@ -249,13 +236,13 @@ public:
    * @brief Construct a cone from a set of cuts.
    * @param cuts The cuts defining the cone boundaries
    */
-  Cone(const std::set<Cut> &cuts);
+  Cone(const std::set<Cut>& cuts);
 
   /**
    * @brief Add a cut boundary to the cone.
    * @param cut The cut to add
    */
-  void addCut(const Cut &cut);
+  void addCut(const Cut& cut);
 
   /**
    * @brief Add a cut boundary to the cone.
@@ -265,7 +252,7 @@ public:
   void addCut(Index hid, Relation dir);
 
   /// Get the cone cuts
-  const std::set<Cut> &cuts() const;
+  const std::set<Cut>& cuts() const;
 
   /// Get the number of cut boundaries
   Index numCuts() const;
@@ -287,7 +274,7 @@ public:
    * @param cut The cut to add
    * @return A new cone with the additional cut
    */
-  Cone refine(const Cut &cut) const;
+  Cone refine(const Cut& cut) const;
 
   /**
    * @brief Get the interior of the cone (cuts set to strict inequalities).
@@ -299,7 +286,7 @@ public:
   std::size_t hash() const;
 
   /// Check equality with another cone
-  bool operator==(const Cone &other) const;
+  bool operator==(const Cone& other) const;
 
 private:
   /// Set of cuts defining the cone boundaries
@@ -314,11 +301,11 @@ private:
 
 /// Hasher functor for Cone objects (for use in unordered containers)
 struct ConeHasher {
-  std::size_t operator()(const Cone &c) const { return c.hash(); }
+  std::size_t operator()(const Cone& c) const { return c.hash(); }
 };
 
 /// Stream output operator for Cone objects
-std::ostream &operator<<(std::ostream &oss, const Cone &cone);
+std::ostream& operator<<(std::ostream& oss, const Cone& cone);
 
 // -----------------------------------------------------------------------------
 // Utility functions
@@ -328,7 +315,7 @@ std::ostream &operator<<(std::ostream &oss, const Cone &cone);
  * @brief Normalize a ternary vector so that its first non-zero entry is +1.
  * @param v The vector to normalize (modified in place)
  */
-void normalize(TernaryVector &v);
+void normalize(TernaryVector& v);
 
 /**
  * @brief Compute the dot product of a ternary vector and a simplex vector.
@@ -336,7 +323,7 @@ void normalize(TernaryVector &v);
  * @param v Simplex vector in {-1,+1}^n
  * @return Integer dot product
  */
-int dot(const TernaryVector &p, const SimplexVector &v);
+int dot(const TernaryVector& p, const SimplexVector& v);
 
 /**
  * @brief Compute the dot product of a ternary vector and a real vector.
@@ -344,7 +331,7 @@ int dot(const TernaryVector &p, const SimplexVector &v);
  * @param v Real vector in R^n
  * @return Real-valued dot product
  */
-double dot(const TernaryVector &p, const RealVector &v);
+double dot(const TernaryVector& p, const RealVector& v);
 
 /**
  * @brief Compute the dot product of a real vector and a binary vector.
@@ -352,7 +339,7 @@ double dot(const TernaryVector &p, const RealVector &v);
  * @param v Binary vector in {0,1}^n
  * @return Real-valued dot product (objective value)
  */
-double dot(const RealVector &p, const BinaryVector &v);
+double dot(const RealVector& p, const BinaryVector& v);
 
 /**
  * @brief Compute the dot product of real vectors.
@@ -360,7 +347,7 @@ double dot(const RealVector &p, const BinaryVector &v);
  * @param v Real vector in R^n
  * @return Real-valued dot product (objective value)
  */
-double dot(const RealVector &p, const RealVector &v);
+double dot(const RealVector& p, const RealVector& v);
 
 /**
  * @brief Compute the bisector hyperplane between two simplex points.
@@ -368,37 +355,36 @@ double dot(const RealVector &p, const RealVector &v);
  * @param p2 Second point in {-1,+1}^n
  * @return Ternary vector representing the separating hyperplane normal
  */
-TernaryVector bisector(const SimplexVector &p1, const SimplexVector &p2);
+TernaryVector bisector(const SimplexVector& p1, const SimplexVector& p2);
 
 /**
  * @brief Map a binary vector to simplex coordinates: x -> 2x - 1.
  * @param x Binary vector in {0,1}^n
  * @return Simplex vector in {-1,+1}^n
  */
-SimplexVector scaleBinary(const BinaryVector &x);
+SimplexVector scaleBinary(const BinaryVector& x);
 
 /**
  * @brief Map a simplex vector to binary coordinates: x -> (x + 1) / 2.
  * @param x Simplex vector in {-1,+1}^n
  * @return Binary vector in {0,1}^n
  */
-SimplexVector unscaleBinary(const SimplexVector &x);
+SimplexVector unscaleBinary(const SimplexVector& x);
 
 /**
  * @brief Map a set of binary vectors to simplex coordinates.
  * @param X Set of binary vectors in {0,1}^n
  * @return Set of simplex vectors in {-1,+1}^n
  */
-std::vector<SimplexVector> scaleBinarySet(const std::vector<BinaryVector> &X);
+std::vector<SimplexVector> scaleBinarySet(const std::vector<BinaryVector>& X);
 
 /**
  * @brief Map a set of simplex vectors to binary coordinates.
  * @param X Set of simplex vectors in {-1,+1}^n
  * @return Set of binary vectors in {0,1}^n
  */
-std::vector<SimplexVector>
-unscaleBinarySet(const std::vector<SimplexVector> &X);
+std::vector<SimplexVector> unscaleBinarySet(const std::vector<SimplexVector>& X);
 
-} // namespace treeco
+}  // namespace treeco
 
-#endif // TREECO_GEOMETRY_HPP
+#endif  // TREECO_GEOMETRY_HPP

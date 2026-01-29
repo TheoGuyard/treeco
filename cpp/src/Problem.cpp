@@ -6,9 +6,7 @@ RealVector Problem::sampleCost(Index seed) const {
   std::uniform_real_distribution<double> dist(0.0, 1.0);
   RealVector cost(dimension_);
   std::mt19937 gen(seed);
-  for (Index i = 0; i < dimension_; ++i) {
-    cost[i] = dist(gen);
-  }
+  for (Index i = 0; i < dimension_; ++i) { cost[i] = dist(gen); }
   return cost;
 }
 
@@ -18,4 +16,4 @@ RealVector Problem::sampleCost() const {
   return sampleCost(seed);
 }
 
-} // namespace treeco
+}  // namespace treeco

@@ -82,9 +82,9 @@ public:
   std::pair<Index, Index> indexToEdge(Index idx) const;
 
 private:
-  Index numCities_; // Number of cities
+  Index numCities_;  // Number of cities
 };
 
-} // namespace treeco
+}  // namespace treeco
 
-#endif // TREECO_PROBLEM_TSP_HPP
+#endif  // TREECO_PROBLEM_TSP_HPP

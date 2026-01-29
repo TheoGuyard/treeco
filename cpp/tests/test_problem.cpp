@@ -1,5 +1,6 @@
-#include <algorithm>
 #include <gtest/gtest.h>
+
+#include <algorithm>
 #include <numeric>
 #include <treeco/Problem.hpp>
 #include <treeco/Problem/Explicit.hpp>
@@ -15,8 +16,7 @@ using namespace treeco;
 // ============================================================================
 
 TEST(ExplicitProblemTest, BasicConstruction) {
-  std::vector<BinaryVector> feasibleSet = {
-      {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 1}};
+  std::vector<BinaryVector> feasibleSet = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 1}};
 
   Explicit problem(feasibleSet);
 
@@ -31,7 +31,7 @@ TEST(ExplicitProblemTest, EmptySetThrows) {
 
 TEST(ExplicitProblemTest, InconsistentDimensionsThrow) {
   std::vector<BinaryVector> badSet = {
-      {0, 0, 0}, {1, 0} // Different dimension
+      {0, 0, 0}, {1, 0}  // Different dimension
   };
   EXPECT_THROW((Explicit(badSet)), std::invalid_argument);
 }
@@ -61,9 +61,7 @@ TEST(TSPTest, BasicConstruction) {
   EXPECT_EQ(tsp.dimension(), 6);
 }
 
-TEST(TSPTest, TooFewCitiesThrows) {
-  EXPECT_THROW(Tsp(2), std::invalid_argument);
-}
+TEST(TSPTest, TooFewCitiesThrows) { EXPECT_THROW(Tsp(2), std::invalid_argument); }
 
 TEST(TSPTest, EdgeIndexing) {
   Tsp tsp(4);
@@ -95,7 +93,7 @@ TEST(TSPTest, ToursAreValid) {
   Tsp tsp(4);
   auto tours = tsp.getFeasibleSet();
 
-  for (const auto &tour : tours) {
+  for (const auto& tour : tours) {
     int numEdges = std::accumulate(tour.begin(), tour.end(), 0);
     EXPECT_EQ(numEdges, 4);
 
@@ -107,9 +105,7 @@ TEST(TSPTest, ToursAreValid) {
         degree[j]++;
       }
     }
-    for (int d : degree) {
-      EXPECT_EQ(d, 2);
-    }
+    for (int d : degree) { EXPECT_EQ(d, 2); }
   }
 }
 
@@ -131,9 +127,7 @@ TEST(MaxCutTest, BasicConstruction) {
   EXPECT_EQ(maxcut.dimension(), 6);
 }
 
-TEST(MaxCutTest, TooFewVerticesThrows) {
-  EXPECT_THROW(Maxcut(1), std::invalid_argument);
-}
+TEST(MaxCutTest, TooFewVerticesThrows) { EXPECT_THROW(Maxcut(1), std::invalid_argument); }
 
 TEST(MaxCutTest, EdgeIndexing) {
   Maxcut maxcut(4);

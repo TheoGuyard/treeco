@@ -3,17 +3,15 @@
 #include <iostream>
 #include <limits>
 #include <string>
-#include <vector>
-
 #include <treeco/Geometry.hpp>
 #include <treeco/LDTree.hpp>
 #include <treeco/Problem/Tsp.hpp>
 #include <treeco/Types.hpp>
+#include <vector>
 
 using namespace treeco;
 
-int main(int argc, char *argv[]) {
-
+int main(int argc, char* argv[]) {
   // Create a Tsp problem with 4 vertices
   Tsp problem(4);
 
@@ -42,18 +40,16 @@ int main(int argc, char *argv[]) {
     printVector(cost, &std::cout);
     std::cout << "\n";
     std::cout << "  sols : {";
-    for (const BinaryVector &sol : sols) {
+    for (const BinaryVector& sol : sols) {
       printVector(sol, &std::cout);
-      if (&sol != &sols.back())
-        std::cout << ",";
+      if (&sol != &sols.back()) std::cout << ",";
     }
     std::cout << "}\n";
     std::cout << "  vals : {";
-    for (const BinaryVector &sol : sols) {
+    for (const BinaryVector& sol : sols) {
       double val = dot(cost, sol);
       std::cout << val;
-      if (&sol != &sols.back())
-        std::cout << ",";
+      if (&sol != &sols.back()) std::cout << ",";
     }
     std::cout << "}\n";
   }

@@ -3,20 +3,18 @@
 #include <iostream>
 #include <limits>
 #include <string>
-#include <vector>
-
 #include <treeco/CLI.hpp>
 #include <treeco/IO.hpp>
 #include <treeco/LDTree.hpp>
 #include <treeco/Types.hpp>
+#include <vector>
 
 using namespace treeco;
 
-int main(int argc, char *argv[]) {
-
+int main(int argc, char* argv[]) {
   Args args = parseArgs(argc, argv);
 
-  std::ostream &out = std::cout;
+  std::ostream& out = std::cout;
 
   if (args.showHelp) {
     printUsage(argv[0], &out);
@@ -42,17 +40,13 @@ int main(int argc, char *argv[]) {
     if (!args.domainFile.empty()) {
       out << "Loading domain file: " << args.domainFile << "\n";
       domain = readDomain(args.domainFile);
-      out << "  dim constr: " << std::to_string(std::get<0>(domain[0]).size())
-          << "\n";
+      out << "  dim constr: " << std::to_string(std::get<0>(domain[0]).size()) << "\n";
       out << "  num constr: " << domain.size() << "\n";
 
       if (points[0].size() != std::get<0>(domain[0]).size()) {
-        std::string msg =
-            "Dimension mismatch between points and domain constraints.";
+        std::string msg = "Dimension mismatch between points and domain constraints.";
         msg += "  dim points: " + std::to_string(points[0].size()) + "\n";
-        msg +=
-            "  dim constr: " + std::to_string(std::get<0>(domain[0]).size()) +
-            "\n";
+        msg += "  dim constr: " + std::to_string(std::get<0>(domain[0]).size()) + "\n";
         throw std::runtime_error(msg);
       }
     }
@@ -84,18 +78,15 @@ int main(int argc, char *argv[]) {
 
     LDTree ldtree(points, domain);
 
-    ldtree.build(args.verbose, &out, args.logInterval, args.timeLimit,
-                 args.tolerance, args.deduplicate, args.filterChecks,
-                 args.exploration, args.branching, args.lowerBounding,
-                 args.positioning, args.splitSelection, args.splitScoring,
-                 args.randomSeed);
+    ldtree.build(args.verbose, &out, args.logInterval, args.logSave, args.timeLimit, args.tolerance, args.deduplicate,
+                 args.filterChecks, args.exploration, args.branching, args.lowerBounding, args.positioning,
+                 args.splitSelection, args.splitScoring, args.randomSeed);
 
     // ====================================================================
     // Perform queries
     // ====================================================================
 
     if (!queries.empty()) {
-
       out << "\n";
       out << "========================================\n";
       out << "Performing queries\n";
@@ -103,16 +94,13 @@ int main(int argc, char *argv[]) {
       out << "\n";
 
       for (size_t q = 0; q < queries.size(); ++q) {
-
-        const RealVector &cost = queries[q];
+        const RealVector& cost = queries[q];
         std::vector<BinaryVector> solutions = ldtree.query(cost);
 
         // Compute objective values
         std::vector<double> values;
         values.reserve(solutions.size());
-        for (const auto &sol : solutions) {
-          values.push_back(dot(cost, sol));
-        }
+        for (const auto& sol : solutions) { values.push_back(dot(cost, sol)); }
 
         // Output results
         out << "query " << (q + 1) << "\n";
@@ -123,15 +111,13 @@ int main(int argc, char *argv[]) {
         out << "  sols : {";
         for (size_t s = 0; s < solutions.size(); ++s) {
           printVector(solutions[s], &out);
-          if (s < solutions.size() - 1)
-            out << ",";
+          if (s < solutions.size() - 1) out << ",";
         }
         out << "}\n";
         out << "  vals : {";
         for (size_t v = 0; v < values.size(); ++v) {
           out << values[v];
-          if (v < values.size() - 1)
-            out << ",";
+          if (v < values.size() - 1) out << ",";
         }
         out << "}\n";
         out << "\n";
@@ -140,7 +126,7 @@ int main(int argc, char *argv[]) {
       out << "\nNo queries to perform.\n";
     }
 
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     out << "Error: " << e.what() << "\n";
     return 1;
   }

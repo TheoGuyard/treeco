@@ -2,73 +2,56 @@
 
 namespace treeco {
 
-LDTree::LDTree(const std::string &filePoints, const std::string &fileDomain)
-    : LDTree(readPoints(filePoints),
-             fileDomain.empty() ? Domain() : readDomain(fileDomain)) {}
+LDTree::LDTree(const std::string& filePoints, const std::string& fileDomain)
+  : LDTree(readPoints(filePoints), fileDomain.empty() ? Domain() : readDomain(fileDomain)) {}
 
-LDTree::LDTree(const std::vector<BinaryVector> &points, const Domain &domain)
-    : domain_(domain), voronoi_(scaleBinarySet(points)), tree_(voronoi_) {}
+LDTree::LDTree(const std::vector<BinaryVector>& points, const Domain& domain)
+  : domain_(domain), voronoi_(scaleBinarySet(points)), tree_(voronoi_) {}
 
-void LDTree::build(bool verbose, std::ostream *outputStream, double logInterval,
-                   double timeLimit, double tolerance, bool deduplicate,
-                   bool filterChecks, Exploration exploration,
-                   Branching branching, LowerBounding lowerBounding,
-                   Positioning positioning, SplitSelection splitSelection,
+void LDTree::build(bool verbose, std::ostream* outputStream, double logInterval, bool logSave, double timeLimit,
+                   double tolerance, bool deduplicate, bool filterChecks, Exploration exploration, Branching branching,
+                   LowerBounding lowerBounding, Positioning positioning, SplitSelection splitSelection,
                    SplitScoring splitScoring, Index randomSeed) {
-
   auto startTime = Clock::now();
 
-  if (verbose) {
-    *outputStream << "Building LDTree...\n";
-  }
+  if (verbose) { *outputStream << "Building LDTree...\n"; }
 
   // Step 1: Build the Voronoi diagram structure
-  VoronoiParams voronoiParams = VoronoiParams{
-      verbose,   outputStream, logInterval, timeLimit - elapsedTime(startTime),
-      tolerance, deduplicate};
+  VoronoiParams voronoiParams =
+      VoronoiParams{verbose, outputStream, logInterval, timeLimit - elapsedTime(startTime), tolerance, deduplicate};
   voronoi_.build(voronoiParams);
 
   // Step 2: Run dynamic programming to find the minimum tree depth
   DynprogParams dynprogParams =
-      DynprogParams{verbose,        outputStream,
-                    logInterval,    timeLimit - elapsedTime(startTime),
-                    tolerance,      filterChecks,
-                    exploration,    branching,
-                    lowerBounding,  positioning,
-                    splitSelection, splitScoring,
-                    randomSeed};
+      DynprogParams{verbose,     outputStream,   logInterval,  logSave,   timeLimit - elapsedTime(startTime),
+                    tolerance,   filterChecks,   exploration,  branching, lowerBounding,
+                    positioning, splitSelection, splitScoring, randomSeed};
   Dynprog dynprog = Dynprog(voronoi_, domain_);
   dynprog.run(dynprogParams);
 
   // Step 3: Synthetize tree structure from the dynamic programming results
-  TreeParams treeParams =
-      TreeParams{verbose, outputStream, logInterval,
-                 timeLimit - elapsedTime(startTime), tolerance};
+  TreeParams treeParams = TreeParams{verbose, outputStream, logInterval, timeLimit - elapsedTime(startTime), tolerance};
   tree_.synthetize(dynprog, treeParams);
 
   // Record statistics
   stats_.buildTime = elapsedTime(startTime);
 
   if (verbose) {
-    std::ostream &out = *(outputStream);
+    std::ostream& out = *(outputStream);
     out << "LDTree constructed\n";
-    out << "  total time  : " << std::fixed << std::setprecision(4)
-        << stats_.buildTime << "\n";
+    out << "  total time  : " << std::fixed << std::setprecision(4) << stats_.buildTime << "\n";
     out << "  tree size   : " << tree_.size() << "\n";
     out << "  tree width  : " << tree_.width() << "\n";
     out << "  tree depth  : " << tree_.depth() << "\n";
   }
 };
 
-std::vector<BinaryVector> LDTree::query(const RealVector &cost,
-                                        bool checkDomain) const {
+std::vector<BinaryVector> LDTree::query(const RealVector& cost, bool checkDomain) const {
   if (checkDomain) {
-    for (const auto &[a, b, rel] : domain_) {
+    for (const auto& [a, b, rel] : domain_) {
       double value = dot(a, cost) + b;
-      if ((rel == Relation::LT && value >= 0.0) ||
-          (rel == Relation::LE && value > 0.0) ||
-          (rel == Relation::EQ && std::abs(value) > 0.0) ||
-          (rel == Relation::GE && value < 0.0) ||
+      if ((rel == Relation::LT && value >= 0.0) || (rel == Relation::LE && value > 0.0) ||
+          (rel == Relation::EQ && std::abs(value) > 0.0) || (rel == Relation::GE && value < 0.0) ||
           (rel == Relation::GT && value <= 0.0) || (rel == Relation::RF)) {
         throw std::runtime_error("Cost vector is outside the defined domain.");
       }
@@ -77,13 +60,11 @@ std::vector<BinaryVector> LDTree::query(const RealVector &cost,
   return unscaleBinarySet(tree_.query(cost));
 }
 
-void LDTree::pprint(bool tightDisplay, std::ostream *outputStream) const {
+void LDTree::pprint(bool tightDisplay, std::ostream* outputStream) const {
   return tree_.pprint(tightDisplay, outputStream);
 }
 
-void LDTree::flatten(const std::string filepath, const std::string doc,
-                     bool benchmarkMode) const {
-
+void LDTree::flatten(const std::string filepath, const std::string doc, bool benchmarkMode) const {
   Index dimPoints = voronoi_.dimPoints();
 
   std::ostringstream out;
@@ -91,9 +72,7 @@ void LDTree::flatten(const std::string filepath, const std::string doc,
   // Header
   out << "#include <stdio.h>\n";
   out << "#include <stdlib.h>\n";
-  if (benchmarkMode) {
-    out << "#include <time.h>\n";
-  }
+  if (benchmarkMode) { out << "#include <time.h>\n"; }
   out << "\n";
   out << "#define DIM " << dimPoints << "\n";
   out << "\n";
@@ -118,8 +97,7 @@ void LDTree::flatten(const std::string filepath, const std::string doc,
   file << out.str();
 }
 
-void LDTree::generateNormalCode(std::ostringstream &out,
-                                const std::string &doc) const {
+void LDTree::generateNormalCode(std::ostringstream& out, const std::string& doc) const {
   out << "int main(int argc, char **argv) {\n";
   out << "    if (argc != DIM + 1) {\n";
   out << "        fprintf(stderr, \"Usage: %s " << doc << " \\n\", argv[0]);\n";
@@ -143,12 +121,10 @@ void LDTree::generateNormalCode(std::ostringstream &out,
   out << "}\n";
 }
 
-void LDTree::generateBenchmarkCode(std::ostringstream &out,
-                                   const std::string &doc) const {
+void LDTree::generateBenchmarkCode(std::ostringstream& out, const std::string& doc) const {
   out << "int main(int argc, char **argv) {\n";
   out << "    if (argc != 3) {\n";
-  out << "        fprintf(stderr, \"Usage: %s <runs> <seed> " << doc
-      << " \\n\", argv[0]);\n";
+  out << "        fprintf(stderr, \"Usage: %s <runs> <seed> " << doc << " \\n\", argv[0]);\n";
   out << "        return 1;\n";
   out << "    }\n";
   out << "\n";
@@ -187,9 +163,8 @@ void LDTree::generateBenchmarkCode(std::ostringstream &out,
   out << "}\n";
 }
 
-void LDTree::generateNodeCode(Index nodeId, std::ostringstream &out,
-                              int indent) const {
-  const Node &node = tree_.node(nodeId);
+void LDTree::generateNodeCode(Index nodeId, std::ostringstream& out, int indent) const {
+  const Node& node = tree_.node(nodeId);
   std::string pad(indent * 4, ' ');
   if (node.type == NodeType::LEAF) {
     BinaryVector point = unscaleBinary(voronoi_.point(node.pointsIds[0]));
@@ -210,22 +185,17 @@ void LDTree::generateNodeCode(Index nodeId, std::ostringstream &out,
   out << pad << "}\n";
 }
 
-void LDTree::generateDotCode(std::ostringstream &out,
-                             const TernaryVector &split) const {
+void LDTree::generateDotCode(std::ostringstream& out, const TernaryVector& split) const {
   bool first = true;
   for (Index i = 0; i < split.size(); i++) {
     if (split[i] == -1) {
-      if (!first) {
-        out << " - ";
-      }
+      if (!first) { out << " - "; }
       out << "c[" << i << "]";
       first = false;
     } else if (split[i] == 0) {
       continue;
     } else if (split[i] == 1) {
-      if (!first) {
-        out << " + ";
-      }
+      if (!first) { out << " + "; }
       out << "c[" << i << "]";
       first = false;
     } else {
@@ -234,7 +204,7 @@ void LDTree::generateDotCode(std::ostringstream &out,
   }
 }
 
-std::ostream &operator<<(std::ostream &oss, const LDTree &ldtree) {
+std::ostream& operator<<(std::ostream& oss, const LDTree& ldtree) {
   oss << "LDTree\n";
   oss << "  dim points: " << ldtree.voronoi().dimPoints() << "\n";
   oss << "  num points: " << ldtree.voronoi().numPoints() << "\n";
@@ -242,4 +212,4 @@ std::ostream &operator<<(std::ostream &oss, const LDTree &ldtree) {
   return oss;
 }
 
-} // namespace treeco
+}  // namespace treeco

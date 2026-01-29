@@ -31,7 +31,7 @@ using Clock = std::chrono::high_resolution_clock;
  * @param start The starting time point
  * @return Elapsed time in seconds
  */
-inline double elapsedTime(const std::chrono::time_point<Clock> &start) {
+inline double elapsedTime(const std::chrono::time_point<Clock>& start) {
   std::chrono::time_point<Clock> end = Clock::now();
   std::chrono::duration<double> elapsed = end - start;
   return elapsed.count();
@@ -43,10 +43,10 @@ using Index = std::size_t;
 /// Sentinel value for invalid indices
 constexpr Index INVALID_INDEX = std::numeric_limits<Index>::max();
 
-using BinaryVector = std::vector<int8_t>;  // Binary vector in {0,1}^n
-using TernaryVector = std::vector<int8_t>; // Ternary vector in {-1,0,+1}^n
-using SimplexVector = std::vector<int8_t>; // Simplex vector in {-1,+1}^n
-using RealVector = std::vector<double>;    // Real-valued vector in R^n
+using BinaryVector = std::vector<int8_t>;   // Binary vector in {0,1}^n
+using TernaryVector = std::vector<int8_t>;  // Ternary vector in {-1,0,+1}^n
+using SimplexVector = std::vector<int8_t>;  // Simplex vector in {-1,+1}^n
+using RealVector = std::vector<double>;     // Real-valued vector in R^n
 
 /**
  * @brief Print a vector to an output stream.
@@ -55,8 +55,7 @@ using RealVector = std::vector<double>;    // Real-valued vector in R^n
  * @param out Output stream (default: std::cout)
  */
 template <typename T>
-inline void printVector(const std::vector<T> &vec,
-                        std::ostream *out = &std::cout) {
+inline void printVector(const std::vector<T>& vec, std::ostream* out = &std::cout) {
   (*out) << "[";
   for (Index i = 0; i < vec.size(); ++i) {
     if constexpr (std::is_same_v<T, int8_t>) {
@@ -64,12 +63,11 @@ inline void printVector(const std::vector<T> &vec,
     } else {
       (*out) << vec[i];
     }
-    if (i < vec.size() - 1)
-      (*out) << ",";
+    if (i < vec.size() - 1) (*out) << ",";
   }
   (*out) << "]";
 }
 
-} // namespace treeco
+}  // namespace treeco
 
-#endif // TREECO_TYPES_HPP
+#endif  // TREECO_TYPES_HPP
