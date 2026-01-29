@@ -71,6 +71,17 @@ public:
    */
   LDTree(const std::vector<BinaryVector>& points, const Domain& domain = Domain());
 
+  /// Serialization constructor
+  LDTree(const Domain& domain, const LDTreeStats& stats, const std::vector<SimplexVector>& voronoiPoints,
+         const std::vector<TernaryVector>& voronoiSplits, const std::vector<Face>& voronoiFaces,
+         const std::vector<Edge>& voronoiEdges, const VoronoiParams& voronoiParams, const VoronoiStats& voronoiStats,
+         const std::vector<Node>& treeNodes, const TreeParams& treeParams, const TreeStats& treeStats, Index treeRootId,
+         Index treeSize, Index treeWidth, Index treeDepth)
+    : domain_(domain)
+    , voronoi_(voronoiPoints, voronoiSplits, voronoiFaces, voronoiEdges, voronoiParams, voronoiStats)
+    , tree_(treeNodes, treeParams, treeStats, treeRootId, treeSize, treeWidth, treeDepth)
+    , stats_(stats) {}
+
   /**
    * @brief Build the LDTree structure.
    *
@@ -103,10 +114,11 @@ public:
   /**
    * @brief Query the tree for optimal solutions.
    * @param cost The cost vector to optimize
+   * @param tolerance Numerical tolerance for split evaluations
    * @param checkDomain Validate that cost is within the domain before querying
    * @return Vector of optimal binary solutions
    */
-  std::vector<BinaryVector> query(const RealVector& cost, bool checkDomain = false) const;
+  std::vector<BinaryVector> query(const RealVector& cost, double tolerance = 1e-8, bool checkDomain = false) const;
 
   /**
    * @brief Pretty-print the tree structure.
@@ -141,7 +153,11 @@ private:
   Tree tree_;          // Decision tree structure
   LDTreeStats stats_;  // Build statistics
 
-  // Code generation helpers
+  // LDTree::pprint helpers
+  void pprintNode(const Node& node, const std::string& prefix, const std::string& label, bool last, bool tightDisplay,
+                  std::ostream* outputStream) const;
+
+  // LDTree::flatten helpers
   void generateNormalCode(std::ostringstream& out, const std::string& doc) const;
   void generateBenchmarkCode(std::ostringstream& out, const std::string& doc) const;
   void generateNodeCode(Index nodeIndex, std::ostringstream& out, int indent = 1) const;

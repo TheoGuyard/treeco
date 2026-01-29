@@ -32,12 +32,12 @@ bool Cut::operator<(const Cut& other) const { return (hid < other.hid) || (hid =
 
 Cone::Cone() = default;
 
-Cone::Cone(const std::set<Cut>& cuts) : cuts_(cuts) {
-  for (const auto& cut : cuts_) {
-    if (cut.dir == Relation::LE || cut.dir == Relation::GE || cut.dir == Relation::EQ) { isOpen_ = false; }
-    if (cut.dir == Relation::LT || cut.dir == Relation::GT || cut.dir == Relation::RF) { containsOrigin_ = false; }
-    if (!isOpen_ && !containsOrigin_) { break; }
-  }
+Cone::Cone(const std::set<Cut>& cuts) {
+  for (const auto& cut : cuts) { addCut(cut); }
+}
+
+Cone::Cone(const std::vector<Cut>& cuts) {
+  for (const auto& cut : cuts) { addCut(cut); }
 }
 
 void Cone::addCut(const Cut& cut) {

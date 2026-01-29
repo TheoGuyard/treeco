@@ -109,6 +109,12 @@ public:
    */
   Voronoi(const std::vector<SimplexVector>& points);
 
+  /// Serialization constructor
+  Voronoi(const std::vector<SimplexVector>& points, const std::vector<TernaryVector>& splits,
+          const std::vector<Face>& faces, const std::vector<Edge>& edges, const VoronoiParams& params,
+          const VoronoiStats& stats)
+    : points_(points), splits_(splits), faces_(faces), edges_(edges), params_(params), stats_(stats) {}
+
   /**
    * @brief Build the Voronoi diagram.
    * @param params Construction parameters
@@ -167,12 +173,12 @@ public:
   const VoronoiParams& params() const { return params_; }
 
 private:
-  const std::vector<SimplexVector> points_;  // Input points
-  std::vector<TernaryVector> splits_;        // Bisector hyperplanes
-  std::vector<Face> faces_;                  // Voronoi faces
-  std::vector<Edge> edges_;                  // Voronoi edges
-  VoronoiParams params_;                     // Construction parameters
-  VoronoiStats stats_;                       // Construction statistics
+  std::vector<SimplexVector> points_;  // Input points
+  std::vector<TernaryVector> splits_;  // Bisector hyperplanes
+  std::vector<Face> faces_;            // Voronoi faces
+  std::vector<Edge> edges_;            // Voronoi edges
+  VoronoiParams params_;               // Construction parameters
+  VoronoiStats stats_;                 // Construction statistics
 
   Clock::time_point startTime_;  // Build start time
   Clock::time_point checkTime_;  // Last logging time

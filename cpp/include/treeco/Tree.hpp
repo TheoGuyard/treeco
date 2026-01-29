@@ -63,7 +63,6 @@ struct TreeParams {
   std::ostream* outputStream = &std::cout;                     // Output stream for logs
   double logInterval = 5.0;                                    // Logging interval in seconds
   double timeLimit = std::numeric_limits<double>::infinity();  // Time limit in seconds
-  double tolerance = 1e-8;                                     // Numerical tolerance
 };
 
 /**
@@ -77,19 +76,22 @@ struct TreeStats {
 };
 
 /**
- * @brief Decision tree for querying optimal solutions.
+ * @brief Tree structure.
  *
  * This class represents a linear decision tree that can be traversed to
  * find optimal solutions for any given cost vector. The tree is synthesized
- * from the results of dynamic programming over the Voronoi diagram.
+ * from the results of dynamic programming and contains nodes pointing to
+ * indices of splits and attributes.
  */
 class Tree {
 public:
-  /**
-   * @brief Construct a tree for a Voronoi diagram.
-   * @param voronoi The Voronoi diagram (must be built)
-   */
-  Tree(const Voronoi& voronoi);
+  /// Default constructor
+  Tree() = default;
+
+  /// Serialization constructor
+  Tree(const std::vector<Node>& nodes, const TreeParams& params, const TreeStats& stats, Index rootId, Index size,
+       Index width, Index depth)
+    : nodes_(nodes), params_(params), stats_(stats), rootId_(rootId), size_(size), width_(width), depth_(depth) {}
 
   /**
    * @brief Synthesize the tree from dynamic programming results.
@@ -97,20 +99,6 @@ public:
    * @param params Construction parameters
    */
   void synthetize(const Dynprog& dynprog, const TreeParams& params = TreeParams());
-
-  /**
-   * @brief Query the tree for optimal solutions.
-   * @param cost The cost vector to query
-   * @return Vector of optimal solutions (as simplex vectors)
-   */
-  std::vector<SimplexVector> query(const std::vector<double>& cost) const;
-
-  /**
-   * @brief Pretty-print the tree structure.
-   * @param tightDisplay If true, show only indices; otherwise show full vectors
-   * @param outputStream Output stream for printing
-   */
-  void pprint(bool tightDisplay = false, std::ostream* outputStream = &std::cout) const;
 
   /// Clear the tree structure
   void clear();
@@ -123,6 +111,9 @@ public:
 
   /// Get a node by index
   const Node& node(Index id) const { return nodes_.at(id); }
+
+  /// Get the root node index
+  Index rootId() const { return rootId_; }
 
   /// Get the number of nodes
   Index size() const { return size_; }
@@ -140,7 +131,6 @@ public:
   const TreeParams& params() const { return params_; }
 
 private:
-  const Voronoi& voronoi_;   // Reference to the Voronoi diagram
   std::vector<Node> nodes_;  // Tree nodes
   TreeParams params_;        // Construction parameters
   TreeStats stats_;          // Construction statistics
