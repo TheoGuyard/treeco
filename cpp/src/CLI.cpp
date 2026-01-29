@@ -2,7 +2,7 @@
 
 namespace treeco {
 
-Args parseArgs(int argc, char *argv[]) {
+Args parseArgs(int argc, char* argv[]) {
   Args args;
 
   for (int i = 1; i < argc; ++i) {
@@ -20,6 +20,8 @@ Args parseArgs(int argc, char *argv[]) {
       args.verbose = true;
     } else if (arg == "--log-interval" && i + 1 < argc) {
       args.logInterval = std::stod(argv[++i]);
+    } else if (arg == "--log-save") {
+      args.logSave = true;
     } else if (arg == "--time-limit" && i + 1 < argc) {
       args.timeLimit = std::stod(argv[++i]);
     } else if (arg == "--tolerance" && i + 1 < argc) {
@@ -59,8 +61,8 @@ Args parseArgs(int argc, char *argv[]) {
   return args;
 }
 
-void printUsage(const char *progName, std::ostream *outputStream) {
-  std::ostream &out = (outputStream != nullptr) ? *outputStream : std::cout;
+void printUsage(const char* progName, std::ostream* outputStream) {
+  std::ostream& out = (outputStream != nullptr) ? *outputStream : std::cout;
   out << "Usage: " << progName << " [options]\n\n";
   out << "Input files:\n";
   out << "  --points <file>       Points file (required, default: none)\n";
@@ -70,6 +72,7 @@ void printUsage(const char *progName, std::ostream *outputStream) {
   out << "General parameters:\n";
   out << "  --verbose             Enable verbose output\n";
   out << "  --log-interval <sec>  Log interval in seconds (default: 5.0)\n";
+  out << "  --log-save            Save logs at each iteration (default: true)\n";
   out << "  --time-limit <sec>    Time limit in seconds (default: infinity)\n";
   out << "  --tolerance <value>   Tolerance for zero (default: 1e-8)\n";
   out << "\n";
@@ -96,4 +99,4 @@ void printUsage(const char *progName, std::ostream *outputStream) {
   out << "  --help                Show this help message\n";
 }
 
-} // namespace treeco
+}  // namespace treeco

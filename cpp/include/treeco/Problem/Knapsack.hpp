@@ -41,7 +41,7 @@ public:
    * @param weights Weights of the items
    * @param capacity Total capacity of the knapsack
    */
-  explicit Knapsack(const RealVector &weights, double capacity);
+  explicit Knapsack(const RealVector& weights, double capacity);
 
   /**
    * @brief Get the number of items.
@@ -84,11 +84,11 @@ public:
   RealVector sampleCost(Index seed) const override;
 
 private:
-  Index numItems_;     // Number of items
-  RealVector weights_; // Weights of the items
-  double capacity_;    // Total capacity of the knapsack
+  Index numItems_;      // Number of items
+  RealVector weights_;  // Weights of the items
+  double capacity_;     // Total capacity of the knapsack
 };
 
-} // namespace treeco
+}  // namespace treeco
 
-#endif // TREECO_PROBLEM_KNAPSACK_HPP
+#endif  // TREECO_PROBLEM_KNAPSACK_HPP

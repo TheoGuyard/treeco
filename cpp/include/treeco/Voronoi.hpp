@@ -35,8 +35,8 @@ namespace treeco {
  * is optimal. Defined by a point index and the cone defining the face.
  */
 struct Face {
-  Index pointId = INVALID_INDEX; // Index of the optimal point for this face
-  Cone cone = Cone();            // Cone defining the face
+  Index pointId = INVALID_INDEX;  // Index of the optimal point for this face
+  Cone cone = Cone();             // Cone defining the face
 
   /// Default constructor
   Face() = default;
@@ -46,7 +46,7 @@ struct Face {
    * @param pointId Index of the optimal point
    * @param cone Cone defining the face
    */
-  Face(Index pointId, const Cone &cone) : pointId(pointId), cone(cone) {}
+  Face(Index pointId, const Cone& cone) : pointId(pointId), cone(cone) {}
 };
 
 /**
@@ -56,9 +56,9 @@ struct Face {
  * bisector hyperplane between two optimal points.
  */
 struct Edge {
-  Index splitId = INVALID_INDEX;  // Index of the split (bisector hyperplane)
-  Index leFaceId = INVALID_INDEX; // Face on the LE side of the split
-  Index geFaceId = INVALID_INDEX; // Face on the GE side of the split
+  Index splitId = INVALID_INDEX;   // Index of the split (bisector hyperplane)
+  Index leFaceId = INVALID_INDEX;  // Face on the LE side of the split
+  Index geFaceId = INVALID_INDEX;  // Face on the GE side of the split
 
   /// Default constructor
   Edge() = default;
@@ -69,30 +69,28 @@ struct Edge {
    * @param leFaceId Index of the face on the LE side
    * @param geFaceId Index of the face on the GE side
    */
-  Edge(Index splitId, Index leFaceId, Index geFaceId)
-      : splitId(splitId), leFaceId(leFaceId), geFaceId(geFaceId) {}
+  Edge(Index splitId, Index leFaceId, Index geFaceId) : splitId(splitId), leFaceId(leFaceId), geFaceId(geFaceId) {}
 };
 
 /**
  * @brief Parameters for Voronoi diagram construction.
  */
 struct VoronoiParams {
-  bool verbose = false;                    // Enable verbose logging
-  std::ostream *outputStream = &std::cout; // Output stream for logs
-  double logInterval = 5.0;                // Logging interval in seconds
-  double timeLimit =
-      std::numeric_limits<double>::infinity(); // Time limit in seconds
-  double tolerance = 1e-8;                     // Numerical tolerance
-  bool deduplicate = true;                     // Remove duplicate points
+  bool verbose = false;                                        // Enable verbose logging
+  std::ostream* outputStream = &std::cout;                     // Output stream for logs
+  double logInterval = 5.0;                                    // Logging interval in seconds
+  double timeLimit = std::numeric_limits<double>::infinity();  // Time limit in seconds
+  double tolerance = 1e-8;                                     // Numerical tolerance
+  bool deduplicate = true;                                     // Remove duplicate points
 };
 
 /**
  * @brief Statistics from Voronoi diagram construction.
  */
 struct VoronoiStats {
-  bool isBuilt = false;   // Whether the diagram has been built
-  double buildTime = 0.0; // Build time in seconds
-  Index lpSolved = 0;     // Number of LP problems solved
+  bool isBuilt = false;    // Whether the diagram has been built
+  double buildTime = 0.0;  // Build time in seconds
+  Index lpSolved = 0;      // Number of LP problems solved
 };
 
 /**
@@ -109,13 +107,13 @@ public:
    * @brief Construct a Voronoi diagram for a point set.
    * @param points Set of simplex points in {-1,+1}^n
    */
-  Voronoi(const std::vector<SimplexVector> &points);
+  Voronoi(const std::vector<SimplexVector>& points);
 
   /**
    * @brief Build the Voronoi diagram.
    * @param params Construction parameters
    */
-  void build(const VoronoiParams &params = VoronoiParams());
+  void build(const VoronoiParams& params = VoronoiParams());
 
   /// Clear the diagram structure and statistics
   void clear();
@@ -139,55 +137,54 @@ public:
   Index numEdges() const { return edges_.size(); }
 
   /// Get a point by index
-  const SimplexVector &point(Index id) const { return points_[id]; }
+  const SimplexVector& point(Index id) const { return points_[id]; }
 
   /// Get a split by index
-  const TernaryVector &split(Index id) const { return splits_[id]; }
+  const TernaryVector& split(Index id) const { return splits_[id]; }
 
   /// Get a face by index
-  const Face &face(Index id) const { return faces_[id]; }
+  const Face& face(Index id) const { return faces_[id]; }
 
   /// Get an edge by index
-  const Edge &edge(Index id) const { return edges_[id]; }
+  const Edge& edge(Index id) const { return edges_[id]; }
 
   /// Get all points
-  const std::vector<SimplexVector> &points() const { return points_; }
+  const std::vector<SimplexVector>& points() const { return points_; }
 
   /// Get all splits
-  const std::vector<TernaryVector> &splits() const { return splits_; }
+  const std::vector<TernaryVector>& splits() const { return splits_; }
 
   /// Get all faces
-  const std::vector<Face> &faces() const { return faces_; }
+  const std::vector<Face>& faces() const { return faces_; }
 
   /// Get all edges
-  const std::vector<Edge> &edges() const { return edges_; }
+  const std::vector<Edge>& edges() const { return edges_; }
 
   /// Get construction statistics
-  const VoronoiStats &stats() const { return stats_; }
+  const VoronoiStats& stats() const { return stats_; }
 
   /// Get construction parameters
-  const VoronoiParams &params() const { return params_; }
+  const VoronoiParams& params() const { return params_; }
 
 private:
-  const std::vector<SimplexVector> points_; // Input points
-  std::vector<TernaryVector> splits_;       // Bisector hyperplanes
-  std::vector<Face> faces_;                 // Voronoi faces
-  std::vector<Edge> edges_;                 // Voronoi edges
-  VoronoiParams params_;                    // Construction parameters
-  VoronoiStats stats_;                      // Construction statistics
+  const std::vector<SimplexVector> points_;  // Input points
+  std::vector<TernaryVector> splits_;        // Bisector hyperplanes
+  std::vector<Face> faces_;                  // Voronoi faces
+  std::vector<Edge> edges_;                  // Voronoi edges
+  VoronoiParams params_;                     // Construction parameters
+  VoronoiStats stats_;                       // Construction statistics
 
-  Clock::time_point startTime_; // Build start time
-  Clock::time_point checkTime_; // Last logging time
+  Clock::time_point startTime_;  // Build start time
+  Clock::time_point checkTime_;  // Last logging time
 
   void logHeader() const;
-  void logProgress(const Adjacency &adj, Index i,
-                   const std::string &message = "");
+  void logProgress(const Adjacency& adj, Index i, const std::string& message = "");
   void logFooter() const;
 };
 
 /// Stream output operator for Voronoi diagram
-std::ostream &operator<<(std::ostream &oss, const Voronoi &voronoi);
+std::ostream& operator<<(std::ostream& oss, const Voronoi& voronoi);
 
-} // namespace treeco
+}  // namespace treeco
 
-#endif // TREECO_VORONOI_HPP
+#endif  // TREECO_VORONOI_HPP

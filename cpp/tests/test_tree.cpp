@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
+
+#include <sstream>
 #include <treeco/Dynprog.hpp>
 #include <treeco/Geometry.hpp>
 #include <treeco/Problem/Tsp.hpp>
 #include <treeco/Tree.hpp>
 #include <treeco/Types.hpp>
 #include <treeco/Voronoi.hpp>
-
-#include <sstream>
 
 using namespace treeco;
 
@@ -77,7 +77,7 @@ TEST_F(TreeTest, SynthetizeStats) {
 
   tree.synthetize(dynprog);
 
-  const TreeStats &stats = tree.stats();
+  const TreeStats& stats = tree.stats();
   EXPECT_TRUE(stats.isBuilt);
   EXPECT_GE(stats.buildTime, 0.0);
 }
@@ -151,7 +151,7 @@ TEST_F(TreeTest, NodesAccessor) {
   dynprog.run();
   tree.synthetize(dynprog);
 
-  const std::vector<Node> &nodes = tree.nodes();
+  const std::vector<Node>& nodes = tree.nodes();
   EXPECT_FALSE(nodes.empty());
   EXPECT_EQ(nodes.size(), tree.size());
 }
@@ -163,7 +163,7 @@ TEST_F(TreeTest, NodeAccessor) {
   tree.synthetize(dynprog);
 
   // Access root node
-  const Node &root = tree.node(0);
+  const Node& root = tree.node(0);
   EXPECT_EQ(root.depth, 0);
   EXPECT_NE(root.type, NodeType::UNDEFINED);
 }
@@ -222,7 +222,7 @@ TEST_F(TreeTest, LeafNodesHavePoints) {
   dynprog.run();
   tree.synthetize(dynprog);
 
-  for (const Node &node : tree.nodes()) {
+  for (const Node& node : tree.nodes()) {
     if (node.type == NodeType::LEAF) {
       EXPECT_FALSE(node.pointsIds.empty());
       EXPECT_EQ(node.splitId, INVALID_INDEX);
@@ -237,7 +237,7 @@ TEST_F(TreeTest, InternalNodesHaveSplits) {
   dynprog.run();
   tree.synthetize(dynprog);
 
-  for (const Node &node : tree.nodes()) {
+  for (const Node& node : tree.nodes()) {
     if (node.type == NodeType::NODE) {
       EXPECT_TRUE(node.pointsIds.empty());
       EXPECT_NE(node.splitId, INVALID_INDEX);

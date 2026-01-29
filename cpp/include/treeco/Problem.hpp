@@ -63,9 +63,9 @@ public:
   virtual RealVector sampleCost(Index seed) const;
 
 protected:
-  Index dimension_ = INVALID_INDEX; // Problem dimension
+  Index dimension_ = INVALID_INDEX;  // Problem dimension
 };
 
-} // namespace treeco
+}  // namespace treeco
 
-#endif // TREECO_PROBLEM_PROBLEM_HPP
+#endif  // TREECO_PROBLEM_PROBLEM_HPP

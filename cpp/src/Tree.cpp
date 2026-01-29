@@ -2,10 +2,9 @@
 
 namespace treeco {
 
-Tree::Tree(const Voronoi &voronoi) : voronoi_(voronoi) {}
+Tree::Tree(const Voronoi& voronoi) : voronoi_(voronoi) {}
 
-void Tree::synthetize(const Dynprog &dynprog, const TreeParams &params) {
-
+void Tree::synthetize(const Dynprog& dynprog, const TreeParams& params) {
   clear();
 
   params_ = params;
@@ -20,23 +19,20 @@ void Tree::synthetize(const Dynprog &dynprog, const TreeParams &params) {
 
   std::queue<std::pair<Index, Index>> queue;
   Index stateId = dynprog.rootId();
-  const State &state = dynprog.state(stateId);
-  Index nodeId = addRoot(state.isLeaf() ? state.faceIds : std::vector<Index>{},
-                         state.isLeaf() ? INVALID_INDEX : state.splitId);
+  const State& state = dynprog.state(stateId);
+  Index nodeId =
+      addRoot(state.isLeaf() ? state.faceIds : std::vector<Index>{}, state.isLeaf() ? INVALID_INDEX : state.splitId);
   queue.emplace(stateId, nodeId);
 
   for (; !queue.empty(); queue.pop()) {
     auto [stateId, nodeId] = queue.front();
-    const Node &node = nodes_.at(nodeId);
+    const Node& node = nodes_.at(nodeId);
     if (node.type == NodeType::NODE) {
-      const State &state = dynprog.state(stateId);
-      for (const auto &[relation, childStateId] :
-           state.splits.at(state.splitId).childIds) {
-        const State &childState = dynprog.state(childStateId);
-        Index childNodeId = addNode(
-            nodeId, relation,
-            childState.isLeaf() ? childState.faceIds : std::vector<Index>{},
-            childState.isLeaf() ? INVALID_INDEX : childState.splitId);
+      const State& state = dynprog.state(stateId);
+      for (const auto& [relation, childStateId] : state.splits.at(state.splitId).childIds) {
+        const State& childState = dynprog.state(childStateId);
+        Index childNodeId = addNode(nodeId, relation, childState.isLeaf() ? childState.faceIds : std::vector<Index>{},
+                                    childState.isLeaf() ? INVALID_INDEX : childState.splitId);
         queue.emplace(childStateId, childNodeId);
       }
     }
@@ -46,9 +42,7 @@ void Tree::synthetize(const Dynprog &dynprog, const TreeParams &params) {
     // Propagate keyboard interrupts from python
     if (Py_IsInitialized()) {
       py::gil_scoped_acquire acquire;
-      if (PyErr_CheckSignals() != 0) {
-        throw py::error_already_set();
-      }
+      if (PyErr_CheckSignals() != 0) { throw py::error_already_set(); }
     }
 #endif
   }
@@ -58,18 +52,15 @@ void Tree::synthetize(const Dynprog &dynprog, const TreeParams &params) {
   stats_.isBuilt = true;
   stats_.buildTime = elapsedTime(startTime_);
   stats_.dynprogStats = dynprog.stats();
+  stats_.dynprogLogs = dynprog.logs();
 
   logFooter();
 }
 
-Index Tree::addRoot(const std::vector<Index> &pointsIds, Index splitId) {
-  if (nodes_.size() > 0) {
-    throw std::runtime_error("Tree is not empty");
-  }
+Index Tree::addRoot(const std::vector<Index>& pointsIds, Index splitId) {
+  if (nodes_.size() > 0) { throw std::runtime_error("Tree is not empty"); }
 
-  if (rootId_ != INVALID_INDEX) {
-    throw std::runtime_error("Root already set");
-  }
+  if (rootId_ != INVALID_INDEX) { throw std::runtime_error("Root already set"); }
 
   if (pointsIds.size() == 0 && splitId == INVALID_INDEX) {
     throw std::runtime_error("Cannot add root with no points and no split");
@@ -93,12 +84,8 @@ Index Tree::addRoot(const std::vector<Index> &pointsIds, Index splitId) {
   return rootId_;
 }
 
-Index Tree::addNode(Index parentId, Relation relation,
-                    const std::vector<Index> &pointsIds, Index splitId) {
-
-  if (parentId < 0 || parentId >= nodes_.size()) {
-    throw std::out_of_range("Parent index out of range");
-  }
+Index Tree::addNode(Index parentId, Relation relation, const std::vector<Index>& pointsIds, Index splitId) {
+  if (parentId < 0 || parentId >= nodes_.size()) { throw std::out_of_range("Parent index out of range"); }
 
   if (pointsIds.size() == 0 && splitId == INVALID_INDEX) {
     throw std::runtime_error("Cannot add node with no points and no split");
@@ -108,12 +95,10 @@ Index Tree::addNode(Index parentId, Relation relation,
     throw std::runtime_error("Cannot add node with both points and split");
   }
 
-  Node &parent = nodes_.at(parentId);
+  Node& parent = nodes_.at(parentId);
   NodeType nodeType = pointsIds.size() > 0 ? NodeType::LEAF : NodeType::NODE;
 
-  if (parent.childIds.find(relation) != parent.childIds.end()) {
-    throw std::runtime_error("Child already exists.");
-  }
+  if (parent.childIds.find(relation) != parent.childIds.end()) { throw std::runtime_error("Child already exists."); }
 
   Index nodeId = nodes_.size();
 
@@ -129,16 +114,13 @@ Index Tree::addNode(Index parentId, Relation relation,
   return nodeId;
 }
 
-std::vector<SimplexVector> Tree::query(const std::vector<double> &cost) const {
-
-  if (!isBuilt()) {
-    throw std::runtime_error("Tree is not built yet.");
-  }
+std::vector<SimplexVector> Tree::query(const std::vector<double>& cost) const {
+  if (!isBuilt()) { throw std::runtime_error("Tree is not built yet."); }
 
   Index nodeId = rootId_;
   while (nodes_[nodeId].type == NodeType::NODE) {
-    const Node &node = nodes_[nodeId];
-    const TernaryVector &split = voronoi_.split(node.splitId);
+    const Node& node = nodes_[nodeId];
+    const TernaryVector& split = voronoi_.split(node.splitId);
     double splitSide = dot(split, cost);
 
     Relation relation;
@@ -159,9 +141,7 @@ std::vector<SimplexVector> Tree::query(const std::vector<double> &cost) const {
   std::vector<SimplexVector> points;
   if (nodes_[nodeId].type == NodeType::LEAF) {
     points.reserve(nodes_[nodeId].pointsIds.size());
-    for (int idx : nodes_[nodeId].pointsIds) {
-      points.push_back(voronoi_.point(idx));
-    }
+    for (int idx : nodes_[nodeId].pointsIds) { points.push_back(voronoi_.point(idx)); }
   } else {
     throw std::runtime_error("Reached a non-leaf node during query.");
   }
@@ -169,15 +149,10 @@ std::vector<SimplexVector> Tree::query(const std::vector<double> &cost) const {
   return points;
 }
 
-void Tree::pprint(bool tightDisplay, std::ostream *outputStream) const {
+void Tree::pprint(bool tightDisplay, std::ostream* outputStream) const {
+  if (!isBuilt()) { throw std::runtime_error("Tree is not built yet."); }
 
-  if (!isBuilt()) {
-    throw std::runtime_error("Tree is not built yet.");
-  }
-
-  if (rootId_ == INVALID_INDEX) {
-    throw std::runtime_error("Tree root is not defined.");
-  }
+  if (rootId_ == INVALID_INDEX) { throw std::runtime_error("Tree root is not defined."); }
 
   if (nodes_.empty()) {
     *params_.outputStream << "Empty tree\n";
@@ -187,17 +162,13 @@ void Tree::pprint(bool tightDisplay, std::ostream *outputStream) const {
   pprintNode(nodes_.at(rootId_), "", "", true, tightDisplay, outputStream);
 }
 
-void Tree::pprintNode(const Node &node, const std::string &prefix,
-                      const std::string &label, bool last, bool tightDisplay,
-                      std::ostream *outputStream) const {
-
-  std::ostream &out = *outputStream;
+void Tree::pprintNode(const Node& node, const std::string& prefix, const std::string& label, bool last,
+                      bool tightDisplay, std::ostream* outputStream) const {
+  std::ostream& out = *outputStream;
 
   std::string branch = (label.empty() ? "" : (last ? "└── " : "├── "));
   out << prefix << branch << label;
-  if (!label.empty()) {
-    out << " ";
-  }
+  if (!label.empty()) { out << " "; }
   if (node.type == NodeType::LEAF) {
     out << "Leaf {";
     for (Index i = 0; i < node.pointsIds.size(); ++i) {
@@ -208,8 +179,7 @@ void Tree::pprintNode(const Node &node, const std::string &prefix,
         BinaryVector point = unscaleBinary(scaledPoint);
         printVector(point, outputStream);
       }
-      if (i + 1 < node.pointsIds.size())
-        out << ",";
+      if (i + 1 < node.pointsIds.size()) out << ",";
     }
     out << "}" << std::endl;
   } else {
@@ -221,14 +191,12 @@ void Tree::pprintNode(const Node &node, const std::string &prefix,
       printVector(split, outputStream);
     }
     out << ")" << std::endl;
-    std::string childPrefix =
-        prefix + (label.empty() ? "" : (last ? "    " : "│   "));
+    std::string childPrefix = prefix + (label.empty() ? "" : (last ? "    " : "│   "));
     Index count = 0;
-    for (const auto &[relation, childId] : node.childIds) {
-      const Node &child = nodes_.at(childId);
+    for (const auto& [relation, childId] : node.childIds) {
+      const Node& child = nodes_.at(childId);
       bool last = (++count == node.childIds.size());
-      pprintNode(child, childPrefix, relationTypeToString(relation), last,
-                 tightDisplay, outputStream);
+      pprintNode(child, childPrefix, relationTypeToString(relation), last, tightDisplay, outputStream);
     }
   }
 }
@@ -243,9 +211,8 @@ void Tree::clear() {
 }
 
 void Tree::logHeader() const {
-  if (!params_.verbose)
-    return;
-  std::ostream &out = *(params_.outputStream);
+  if (!params_.verbose) return;
+  std::ostream& out = *(params_.outputStream);
   out << "Synthesizing tree...\n";
   out << std::string("  ") + std::string(4 * 12, '-') << "\n";
   out << "  ";
@@ -256,20 +223,15 @@ void Tree::logHeader() const {
   out << "\n";
 }
 
-void Tree::logProgress(const std::string &message) {
-  if (!params_.verbose) {
-    return;
-  }
-  if (elapsedTime(checkTime_) < params_.logInterval && message.empty()) {
-    return;
-  }
+void Tree::logProgress(const std::string& message) {
+  if (!params_.verbose) { return; }
+  if (elapsedTime(checkTime_) < params_.logInterval && message.empty()) { return; }
 
   checkTime_ = Clock::now();
 
-  std::ostream &out = *(params_.outputStream);
+  std::ostream& out = *(params_.outputStream);
   out << "  ";
-  out << std::setw(12) << std::fixed << std::setprecision(2)
-      << elapsedTime(startTime_);
+  out << std::setw(12) << std::fixed << std::setprecision(2) << elapsedTime(startTime_);
   out << std::setw(12) << size_;
   out << std::setw(12) << width_;
   out << std::setw(12) << depth_;
@@ -278,15 +240,13 @@ void Tree::logProgress(const std::string &message) {
 }
 
 void Tree::logFooter() const {
-  if (!params_.verbose)
-    return;
-  std::ostream &out = *(params_.outputStream);
+  if (!params_.verbose) return;
+  std::ostream& out = *(params_.outputStream);
   out << std::string("  ") + std::string(4 * 12, '-') << "\n";
-  out << "  time: " << std::fixed << std::setprecision(4) << stats_.buildTime
-      << "\n";
+  out << "  time: " << std::fixed << std::setprecision(4) << stats_.buildTime << "\n";
 }
 
-std::ostream &operator<<(std::ostream &oss, const Tree &tree) {
+std::ostream& operator<<(std::ostream& oss, const Tree& tree) {
   oss << "Tree\n";
   oss << "  depth : " + std::to_string(tree.depth()) + "\n";
   oss << "  width : " + std::to_string(tree.width()) + "\n";
@@ -294,4 +254,4 @@ std::ostream &operator<<(std::ostream &oss, const Tree &tree) {
   return oss;
 }
 
-} // namespace treeco
+}  // namespace treeco

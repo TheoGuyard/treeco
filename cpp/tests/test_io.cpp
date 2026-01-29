@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
-#include <treeco/IO.hpp>
-#include <treeco/Types.hpp>
 
 #include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include <treeco/IO.hpp>
+#include <treeco/Types.hpp>
 
 using namespace treeco;
 
@@ -13,14 +13,11 @@ class IOTest : public ::testing::Test {
 protected:
   std::string tempFilePath;
 
-  void SetUp() override {
-    tempFilePath =
-        "/tmp/treeco_test_io_" + std::to_string(std::rand()) + ".txt";
-  }
+  void SetUp() override { tempFilePath = "/tmp/treeco_test_io_" + std::to_string(std::rand()) + ".txt"; }
 
   void TearDown() override { std::remove(tempFilePath.c_str()); }
 
-  void writeToFile(const std::string &content) {
+  void writeToFile(const std::string& content) {
     std::ofstream outfile(tempFilePath);
     outfile << content;
     outfile.close();
@@ -74,9 +71,7 @@ TEST_F(IOTest, ReadPointsWithEmptyLines) {
   EXPECT_EQ(points[1], (BinaryVector{1, 0}));
 }
 
-TEST_F(IOTest, ReadPointsFileNotFound) {
-  EXPECT_THROW(readPoints("/nonexistent/path/file.txt"), std::runtime_error);
-}
+TEST_F(IOTest, ReadPointsFileNotFound) { EXPECT_THROW(readPoints("/nonexistent/path/file.txt"), std::runtime_error); }
 
 TEST_F(IOTest, ReadPointsEmptyFile) {
   writeToFile("");
@@ -127,8 +122,7 @@ TEST_F(IOTest, ReadPointsTooFewPoints) {
 // ============================================================================
 
 TEST_F(IOTest, WritePointsBasic) {
-  std::vector<BinaryVector> points = {
-      {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 1}};
+  std::vector<BinaryVector> points = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 1}};
 
   writePoints(tempFilePath, points);
 
@@ -149,22 +143,19 @@ TEST_F(IOTest, WritePointsEmpty) {
 
 TEST_F(IOTest, WritePointsInconsistentDimensions) {
   std::vector<BinaryVector> points = {
-      {0, 0, 0}, {1, 0} // Different dimension
+      {0, 0, 0}, {1, 0}  // Different dimension
   };
   EXPECT_THROW(writePoints(tempFilePath, points), std::runtime_error);
 }
 
 TEST_F(IOTest, WriteReadPointsRoundTrip) {
-  std::vector<BinaryVector> original = {
-      {1, 0, 1, 0, 1}, {0, 1, 0, 1, 0}, {1, 1, 1, 1, 1}};
+  std::vector<BinaryVector> original = {{1, 0, 1, 0, 1}, {0, 1, 0, 1, 0}, {1, 1, 1, 1, 1}};
 
   writePoints(tempFilePath, original);
   std::vector<BinaryVector> readBack = readPoints(tempFilePath);
 
   ASSERT_EQ(readBack.size(), original.size());
-  for (size_t i = 0; i < original.size(); ++i) {
-    EXPECT_EQ(readBack[i], original[i]);
-  }
+  for (size_t i = 0; i < original.size(); ++i) { EXPECT_EQ(readBack[i], original[i]); }
 }
 
 // ============================================================================
@@ -181,7 +172,7 @@ TEST_F(IOTest, ReadDomainBasic) {
   ASSERT_EQ(domain.size(), 2);
 
   // First constraint
-  const auto &[coeffs1, b1, rel1] = domain[0];
+  const auto& [coeffs1, b1, rel1] = domain[0];
   ASSERT_EQ(coeffs1.size(), 3);
   EXPECT_DOUBLE_EQ(coeffs1[0], 1.0);
   EXPECT_DOUBLE_EQ(coeffs1[1], 2.0);
@@ -190,7 +181,7 @@ TEST_F(IOTest, ReadDomainBasic) {
   EXPECT_EQ(rel1, Relation::LT);
 
   // Second constraint
-  const auto &[coeffs2, b2, rel2] = domain[1];
+  const auto& [coeffs2, b2, rel2] = domain[1];
   ASSERT_EQ(coeffs2.size(), 3);
   EXPECT_DOUBLE_EQ(coeffs2[0], 0.5);
   EXPECT_DOUBLE_EQ(coeffs2[1], -0.5);
@@ -217,9 +208,7 @@ TEST_F(IOTest, ReadDomainAllRelations) {
   EXPECT_EQ(std::get<2>(domain[4]), Relation::GT);
 }
 
-TEST_F(IOTest, ReadDomainFileNotFound) {
-  EXPECT_THROW(readDomain("/nonexistent/path/file.txt"), std::runtime_error);
-}
+TEST_F(IOTest, ReadDomainFileNotFound) { EXPECT_THROW(readDomain("/nonexistent/path/file.txt"), std::runtime_error); }
 
 TEST_F(IOTest, ReadDomainEmptyFile) {
   writeToFile("");
@@ -239,7 +228,7 @@ TEST_F(IOTest, ReadDomainInvalidRelation) {
 
 TEST_F(IOTest, ReadDomainMissingCoefficients) {
   writeToFile("domain 3 1\n"
-              "1.0 2.0 0.0 LT\n" // Missing b
+              "1.0 2.0 0.0 LT\n"  // Missing b
   );
   EXPECT_THROW(readDomain(tempFilePath), std::runtime_error);
 }
@@ -256,8 +245,7 @@ TEST_F(IOTest, ReadDomainWrongConstraintCount) {
 // ============================================================================
 
 TEST_F(IOTest, WriteDomainBasic) {
-  Domain domain = {{RealVector{1.0, 2.0, -1.0}, 3.5, Relation::LT},
-                   {RealVector{0.5, -0.5, 1.0}, 0.0, Relation::EQ}};
+  Domain domain = {{RealVector{1.0, 2.0, -1.0}, 3.5, Relation::LT}, {RealVector{0.5, -0.5, 1.0}, 0.0, Relation::EQ}};
 
   writeDomain(tempFilePath, domain);
 
@@ -266,7 +254,7 @@ TEST_F(IOTest, WriteDomainBasic) {
 
   ASSERT_EQ(readBack.size(), 2);
 
-  const auto &[coeffs1, b1, rel1] = readBack[0];
+  const auto& [coeffs1, b1, rel1] = readBack[0];
   EXPECT_DOUBLE_EQ(coeffs1[0], 1.0);
   EXPECT_DOUBLE_EQ(coeffs1[1], 2.0);
   EXPECT_DOUBLE_EQ(coeffs1[2], -1.0);
@@ -299,8 +287,7 @@ TEST_F(IOTest, WriteDomainEmpty) {
 
 TEST_F(IOTest, WriteDomainInconsistentDimensions) {
   Domain domain = {
-      {RealVector{1.0, 2.0, 3.0}, 0.0, Relation::LT},
-      {RealVector{1.0, 2.0}, 0.0, Relation::GT} // Different dimension
+      {RealVector{1.0, 2.0, 3.0}, 0.0, Relation::LT}, {RealVector{1.0, 2.0}, 0.0, Relation::GT}  // Different dimension
   };
   EXPECT_THROW(writeDomain(tempFilePath, domain), std::runtime_error);
 }
@@ -353,9 +340,7 @@ TEST_F(IOTest, ReadQueriesWithEmptyLines) {
   EXPECT_DOUBLE_EQ(queries[1][0], 3.0);
 }
 
-TEST_F(IOTest, ReadQueriesFileNotFound) {
-  EXPECT_THROW(readQueries("/nonexistent/path/file.txt"), std::runtime_error);
-}
+TEST_F(IOTest, ReadQueriesFileNotFound) { EXPECT_THROW(readQueries("/nonexistent/path/file.txt"), std::runtime_error); }
 
 TEST_F(IOTest, ReadQueriesEmptyFile) {
   writeToFile("");
@@ -413,14 +398,13 @@ TEST_F(IOTest, WriteQueriesEmpty) {
 
 TEST_F(IOTest, WriteQueriesInconsistentDimensions) {
   std::vector<RealVector> queries = {
-      {1.0, 2.0, 3.0}, {1.0, 2.0} // Different dimension
+      {1.0, 2.0, 3.0}, {1.0, 2.0}  // Different dimension
   };
   EXPECT_THROW(writeQueries(tempFilePath, queries), std::runtime_error);
 }
 
 TEST_F(IOTest, WriteReadQueriesRoundTrip) {
-  std::vector<RealVector> original = {{1.23456789, -9.87654321, 0.0},
-                                      {3.14159265, 2.71828182, -1.41421356}};
+  std::vector<RealVector> original = {{1.23456789, -9.87654321, 0.0}, {3.14159265, 2.71828182, -1.41421356}};
 
   writeQueries(tempFilePath, original);
   std::vector<RealVector> readBack = readQueries(tempFilePath);
@@ -428,9 +412,7 @@ TEST_F(IOTest, WriteReadQueriesRoundTrip) {
   ASSERT_EQ(readBack.size(), original.size());
   for (size_t i = 0; i < original.size(); ++i) {
     ASSERT_EQ(readBack[i].size(), original[i].size());
-    for (size_t j = 0; j < original[i].size(); ++j) {
-      EXPECT_NEAR(readBack[i][j], original[i][j], 1e-10);
-    }
+    for (size_t j = 0; j < original[i].size(); ++j) { EXPECT_NEAR(readBack[i][j], original[i][j], 1e-10); }
   }
 }
 

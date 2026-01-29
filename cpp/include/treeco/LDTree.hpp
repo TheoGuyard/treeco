@@ -36,7 +36,7 @@ namespace treeco {
  * @brief Statistics from LDTree construction.
  */
 struct LDTreeStats {
-  double buildTime = 0.0; // Total build time in seconds
+  double buildTime = 0.0;  // Total build time in seconds
 };
 
 /**
@@ -62,15 +62,14 @@ public:
    * @param fileDomain Path to file containing cost domain constraints
    * (optional)
    */
-  LDTree(const std::string &filePoints, const std::string &fileDomain = "");
+  LDTree(const std::string& filePoints, const std::string& fileDomain = "");
 
   /**
    * @brief Construct an LDTree from data objects.
    * @param points Vector of feasible binary solutions
    * @param domain Optional linear constraints on the cost domain
    */
-  LDTree(const std::vector<BinaryVector> &points,
-         const Domain &domain = Domain());
+  LDTree(const std::vector<BinaryVector>& points, const Domain& domain = Domain());
 
   /**
    * @brief Build the LDTree structure.
@@ -81,6 +80,7 @@ public:
    * @param verbose Enable verbose logging output
    * @param outputStream Output stream for logging (default: std::cout)
    * @param logInterval Logging interval in seconds
+   * @param logSave Save logs at each iteration of the dynamic programming
    * @param timeLimit Maximum build time in seconds
    * @param tolerance Numerical tolerance for equality comparisons
    * @param deduplicate Remove duplicate feasible points before building
@@ -93,18 +93,12 @@ public:
    * @param splitScoring Split quality scoring strategy
    * @param randomSeed Random seed for sampling-based selection
    */
-  void build(bool verbose = false, std::ostream *outputStream = &std::cout,
-             double logInterval = 5.0,
-             double timeLimit = std::numeric_limits<double>::infinity(),
-             double tolerance = 1e-8, bool deduplicate = true,
-             bool filterChecks = true,
-             Exploration exploration = Exploration::ITERATIVE,
-             Branching branching = Branching::BINARY,
-             LowerBounding lowerBounding = LowerBounding::BACKTRACK,
-             Positioning positioning = Positioning::ONLINE,
-             SplitSelection splitSelection = SplitSelection::ALL,
-             SplitScoring splitScoring = SplitScoring::VARIANCE,
-             Index randomSeed = 42);
+  void build(bool verbose = false, std::ostream* outputStream = &std::cout, double logInterval = 5.0,
+             bool logSave = true, double timeLimit = std::numeric_limits<double>::infinity(), double tolerance = 1e-8,
+             bool deduplicate = true, bool filterChecks = true, Exploration exploration = Exploration::ITERATIVE,
+             Branching branching = Branching::BINARY, LowerBounding lowerBounding = LowerBounding::BACKTRACK,
+             Positioning positioning = Positioning::ONLINE, SplitSelection splitSelection = SplitSelection::ALL,
+             SplitScoring splitScoring = SplitScoring::VARIANCE, Index randomSeed = 42);
 
   /**
    * @brief Query the tree for optimal solutions.
@@ -112,16 +106,14 @@ public:
    * @param checkDomain Validate that cost is within the domain before querying
    * @return Vector of optimal binary solutions
    */
-  std::vector<BinaryVector> query(const RealVector &cost,
-                                  bool checkDomain = false) const;
+  std::vector<BinaryVector> query(const RealVector& cost, bool checkDomain = false) const;
 
   /**
    * @brief Pretty-print the tree structure.
    * @param tightDisplay If true, show only indices; otherwise show full vectors
    * @param outputStream Output stream for printing
    */
-  void pprint(bool tightDisplay = false,
-              std::ostream *outputStream = &std::cout) const;
+  void pprint(bool tightDisplay = false, std::ostream* outputStream = &std::cout) const;
 
   /**
    * @brief Generate standalone C code implementing the decision tree.
@@ -129,41 +121,36 @@ public:
    * @param doc Documentation header for the generated code
    * @param benchmarkMode Generate benchmarking code instead of query code
    */
-  void flatten(const std::string filepath, const std::string doc = "",
-               bool benchmarkMode = false) const;
+  void flatten(const std::string filepath, const std::string doc = "", bool benchmarkMode = false) const;
 
   /// Get the cost domain constraints
-  const Domain &domain() const noexcept { return domain_; }
+  const Domain& domain() const noexcept { return domain_; }
 
   /// Get the Voronoi diagram
-  const Voronoi &voronoi() const noexcept { return voronoi_; }
+  const Voronoi& voronoi() const noexcept { return voronoi_; }
 
   /// Get the decision tree structure
-  const Tree &tree() const noexcept { return tree_; }
+  const Tree& tree() const noexcept { return tree_; }
 
   /// Get build statistics
-  const LDTreeStats &stats() const noexcept { return stats_; }
+  const LDTreeStats& stats() const noexcept { return stats_; }
 
 private:
-  Domain domain_;     // Cost domain constraints
-  Voronoi voronoi_;   // Voronoi diagram of feasible points
-  Tree tree_;         // Decision tree structure
-  LDTreeStats stats_; // Build statistics
+  Domain domain_;      // Cost domain constraints
+  Voronoi voronoi_;    // Voronoi diagram of feasible points
+  Tree tree_;          // Decision tree structure
+  LDTreeStats stats_;  // Build statistics
 
   // Code generation helpers
-  void generateNormalCode(std::ostringstream &out,
-                          const std::string &doc) const;
-  void generateBenchmarkCode(std::ostringstream &out,
-                             const std::string &doc) const;
-  void generateNodeCode(Index nodeIndex, std::ostringstream &out,
-                        int indent = 1) const;
-  void generateDotCode(std::ostringstream &out,
-                       const TernaryVector &split) const;
+  void generateNormalCode(std::ostringstream& out, const std::string& doc) const;
+  void generateBenchmarkCode(std::ostringstream& out, const std::string& doc) const;
+  void generateNodeCode(Index nodeIndex, std::ostringstream& out, int indent = 1) const;
+  void generateDotCode(std::ostringstream& out, const TernaryVector& split) const;
 };
 
 /// Stream output operator for LDTree
-std::ostream &operator<<(std::ostream &oss, const LDTree &tree);
+std::ostream& operator<<(std::ostream& oss, const LDTree& tree);
 
-} // namespace treeco
+}  // namespace treeco
 
-#endif // TREECO_LDTREE_HPP
+#endif  // TREECO_LDTREE_HPP

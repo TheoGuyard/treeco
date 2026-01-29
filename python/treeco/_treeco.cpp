@@ -1,7 +1,8 @@
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <pybind11/functional.h>
 #include <pybind11/operators.h>
+#include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 
 #include "treeco/Geometry.hpp"
 #include "treeco/LDTree.hpp"
@@ -60,6 +61,14 @@ void bind_module_geometry(py::module_ &m) {
         .value("rt", Relation::RT)
         .value("rf", Relation::RF)
         ;
+
+    py::class_<ConstrData>(m, "ConstrData")
+        .def_property_readonly("a", [](const ConstrData &self) { return std::get<0>(self); })
+        .def_property_readonly("b", [](const ConstrData &self) { return std::get<1>(self); })
+        .def_property_readonly("rel", [](const ConstrData &self) { return std::get<2>(self); })
+        ;
+
+    py::bind_vector<Domain>(m, "Domain");
 
     m.def("positive_orthant", &positiveOrthant, py::arg("dimension"));
     m.def("non_negative_orthant", &nonNegativeOrthant, py::arg("dimension"));
@@ -178,6 +187,8 @@ void bind_module_dynprog(py::module_ &m) {
         .def_readonly("num_feasibility_checks", &DynprogStats::numFeasibilityChecks)
         .def_readonly("optimal_depth", &DynprogStats::optimalDepth)
         ;
+
+    py::bind_vector<DynprogLogs>(m, "DynprogLogs");
 }
 
 void bind_module_tree(py::module_ &m) {
@@ -185,12 +196,14 @@ void bind_module_tree(py::module_ &m) {
     py::class_<TreeStats>(m, "TreeStats")
         .def_readonly("build_time", &TreeStats::buildTime)
         .def_readonly("dynprog_stats", &TreeStats::dynprogStats, py::return_value_policy::reference_internal)
+        .def_readonly("dynprog_logs", &TreeStats::dynprogLogs, py::return_value_policy::reference_internal)
         ;
 
     py::class_<Tree>(m, "Tree")
         .def_property_readonly("size", &Tree::size)
         .def_property_readonly("width", &Tree::width)
         .def_property_readonly("depth", &Tree::depth)
+        .def_property_readonly("stats", &Tree::stats, py::return_value_policy::reference_internal)
         ;
 }
 
@@ -213,6 +226,7 @@ void bind_module_ldtree(py::module_ &m) {
                 LDTree&         self,
                 bool            verbose,
                 double          logInterval,
+                bool            logSave,
                 double          timeLimit,
                 double          tolerance,
                 bool            deduplicate,
@@ -229,6 +243,7 @@ void bind_module_ldtree(py::module_ &m) {
                     verbose,
                     verbose ? &std::cout : nullptr,
                     logInterval,
+                    logSave,
                     timeLimit,
                     tolerance,
                     deduplicate,
@@ -244,6 +259,7 @@ void bind_module_ldtree(py::module_ &m) {
             },
             py::arg("verbose")          = false,
             py::arg("log_interval")     = 5.0,
+            py::arg("log_save")         = true,
             py::arg("time_limit")       = std::numeric_limits<double>::infinity(),
             py::arg("tolerance")        = 1e-8,
             py::arg("deduplicate")      = true,

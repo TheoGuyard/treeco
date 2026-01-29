@@ -2,19 +2,12 @@
 
 namespace treeco {
 
-Adjacency::Adjacency(const std::vector<SimplexVector> &pool)
-    : pool_(pool), env_(getGurobiEnv()), model_(env_) {
-  if (pool_.empty()) {
-    throw std::invalid_argument("Pool cannot be empty");
-  }
-  if (pool_.size() < 2) {
-    throw std::invalid_argument("Pool must contain at least 2 points");
-  }
+Adjacency::Adjacency(const std::vector<SimplexVector>& pool) : pool_(pool), env_(getGurobiEnv()), model_(env_) {
+  if (pool_.empty()) { throw std::invalid_argument("Pool cannot be empty"); }
+  if (pool_.size() < 2) { throw std::invalid_argument("Pool must contain at least 2 points"); }
 
-  for (const auto &p : pool_) {
-    if (p.size() != pool_[0].size()) {
-      throw std::invalid_argument("Points must have the same dimension");
-    }
+  for (const auto& p : pool_) {
+    if (p.size() != pool_[0].size()) { throw std::invalid_argument("Points must have the same dimension"); }
   }
 
   build();
@@ -29,8 +22,7 @@ void Adjacency::build() {
   var2_.reserve(numPool);
   for (Index i = 0; i < numPool; ++i) {
     var1_.emplace_back(model_.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS));
-    var2_.emplace_back(
-        model_.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS));
+    var2_.emplace_back(model_.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS));
   }
 
   // Initialize constraints
@@ -38,9 +30,7 @@ void Adjacency::build() {
   cstr4_.reserve(numPool);
   for (Index j = 0; j < dimPool; ++j) {
     GRBLinExpr expr1 = 0;
-    for (Index i = 0; i < numPool; ++i) {
-      expr1 += pool_[i][j] * var2_[i];
-    }
+    for (Index i = 0; i < numPool; ++i) { expr1 += pool_[i][j] * var2_[i]; }
     cstr1_.emplace_back(model_.addConstr(expr1 == 0.0));
   }
   GRBLinExpr expr2 = 0;
@@ -81,10 +71,7 @@ void Adjacency::remove(Index i, Index j) {
 }
 
 bool Adjacency::check(Index i, Index j) {
-
-  if (i == j) {
-    throw std::invalid_argument("Index i and j must be different");
-  }
+  if (i == j) { throw std::invalid_argument("Index i and j must be different"); }
 
   add(i, j);
   model_.optimize();
@@ -102,4 +89,4 @@ bool Adjacency::check(Index i, Index j) {
   }
 }
 
-} // namespace treeco
+}  // namespace treeco

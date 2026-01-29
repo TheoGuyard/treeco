@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from treeco.dynprog import DynprogStats
+from treeco.dynprog import DynprogStats, DynprogLogs
 
 @dataclass
 class TreeStats:
@@ -13,6 +13,7 @@ class TreeStats:
 
     build_time: float
     dynprog_stats: DynprogStats
+    dynprog_logs: DynprogLogs
 
 class Tree:
     """

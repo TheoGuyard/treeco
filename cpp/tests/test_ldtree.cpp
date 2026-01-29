@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
+
+#include <cstdio>
+#include <fstream>
+#include <sstream>
 #include <treeco/Geometry.hpp>
 #include <treeco/LDTree.hpp>
 #include <treeco/Problem/Explicit.hpp>
 #include <treeco/Problem/Tsp.hpp>
 #include <treeco/Types.hpp>
-
-#include <cstdio>
-#include <fstream>
-#include <sstream>
 
 using namespace treeco;
 
@@ -23,19 +23,16 @@ protected:
     points = tsp.getFeasibleSet();
 
     // Create temporary file for file-based tests
-    tempPointsFile = "/tmp/treeco_test_ldtree_points_" +
-                     std::to_string(std::rand()) + ".txt";
-    tempOutputFile =
-        "/tmp/treeco_test_ldtree_output_" + std::to_string(std::rand()) + ".c";
+    tempPointsFile = "/tmp/treeco_test_ldtree_points_" + std::to_string(std::rand()) + ".txt";
+    tempOutputFile = "/tmp/treeco_test_ldtree_output_" + std::to_string(std::rand()) + ".c";
 
     // Write points to file
     std::ofstream outfile(tempPointsFile);
     outfile << "points " << points[0].size() << " " << points.size() << "\n";
-    for (const auto &point : points) {
+    for (const auto& point : points) {
       for (size_t i = 0; i < point.size(); ++i) {
         outfile << static_cast<int>(point[i]);
-        if (i < point.size() - 1)
-          outfile << " ";
+        if (i < point.size() - 1) outfile << " ";
       }
       outfile << "\n";
     }
@@ -71,9 +68,7 @@ TEST_F(LDTreeTest, ConstructWithEmptyDomain) {
   EXPECT_TRUE(ldtree.domain().empty());
 }
 
-TEST_F(LDTreeTest, ConstructFromFileNotFound) {
-  EXPECT_THROW(LDTree("/nonexistent/path.txt"), std::runtime_error);
-}
+TEST_F(LDTreeTest, ConstructFromFileNotFound) { EXPECT_THROW(LDTree("/nonexistent/path.txt"), std::runtime_error); }
 
 // ============================================================================
 // Build Tests
@@ -92,8 +87,8 @@ TEST_F(LDTreeTest, BuildWithVerbose) {
   LDTree ldtree(points);
 
   std::ostringstream oss;
-  ldtree.build(true, // verbose
-               &oss  // outputStream
+  ldtree.build(true,  // verbose
+               &oss   // outputStream
   );
 
   EXPECT_TRUE(ldtree.tree().isBuilt());
@@ -103,24 +98,23 @@ TEST_F(LDTreeTest, BuildWithVerbose) {
 TEST_F(LDTreeTest, BuildWithTolerance) {
   LDTree ldtree(points);
 
-  ldtree.build(false,                                   // verbose
-               &std::cout,                              // outputStream
-               5.0,                                     // logInterval
-               std::numeric_limits<double>::infinity(), // timeLimit
-               1e-7                                     // tolerance
+  ldtree.build(false,                                    // verbose
+               &std::cout,                               // outputStream
+               5.0,                                      // logInterval
+               true,                                     // logSave
+               std::numeric_limits<double>::infinity(),  // timeLimit
+               1e-7                                      // tolerance
   );
 
   EXPECT_TRUE(ldtree.tree().isBuilt());
 
-  EXPECT_THROW(ldtree.build(false, &std::cout, 5.0,
-                            std::numeric_limits<double>::infinity(),
-                            1e-10 // Too small tolerance
+  EXPECT_THROW(ldtree.build(false, &std::cout, 5.0, true, std::numeric_limits<double>::infinity(),
+                            1e-10  // Too small tolerance
                             ),
                std::invalid_argument);
 
-  EXPECT_THROW(ldtree.build(false, &std::cout, 5.0,
-                            std::numeric_limits<double>::infinity(),
-                            -1e-1 // Invalid tolerance
+  EXPECT_THROW(ldtree.build(false, &std::cout, 5.0, true, std::numeric_limits<double>::infinity(),
+                            -1e-1  // Invalid tolerance
                             ),
                std::invalid_argument);
 }
@@ -129,7 +123,7 @@ TEST_F(LDTreeTest, BuildStats) {
   LDTree ldtree(points);
   ldtree.build();
 
-  const LDTreeStats &stats = ldtree.stats();
+  const LDTreeStats& stats = ldtree.stats();
   EXPECT_GE(stats.buildTime, 0.0);
 }
 
@@ -149,9 +143,9 @@ TEST_F(LDTreeTest, QueryBasic) {
   EXPECT_FALSE(result.empty());
 
   // Verify result is in the feasible set
-  for (const auto &sol : result) {
+  for (const auto& sol : result) {
     bool found = false;
-    for (const auto &pt : points) {
+    for (const auto& pt : points) {
       if (sol == pt) {
         found = true;
         break;
@@ -186,10 +180,8 @@ TEST_F(LDTreeTest, QueryResultIsBinary) {
 
   std::vector<BinaryVector> result = ldtree.query(cost);
 
-  for (const auto &sol : result) {
-    for (auto val : sol) {
-      EXPECT_TRUE(val == 0 || val == 1);
-    }
+  for (const auto& sol : result) {
+    for (auto val : sol) { EXPECT_TRUE(val == 0 || val == 1); }
   }
 }
 
@@ -199,8 +191,7 @@ TEST_F(LDTreeTest, QueryResultIsBinary) {
 
 TEST_F(LDTreeTest, DomainAccessor) {
   Domain domain;
-  domain.push_back(
-      {RealVector{1.0, -1.0, 0.0, 0.0, 0.0, 0.0}, 0.0, Relation::GE});
+  domain.push_back({RealVector{1.0, -1.0, 0.0, 0.0, 0.0, 0.0}, 0.0, Relation::GE});
 
   LDTree ldtree(points, domain);
 
@@ -215,7 +206,7 @@ TEST_F(LDTreeTest, VoronoiAccessor) {
   LDTree ldtree(points);
   ldtree.build();
 
-  const Voronoi &voronoi = ldtree.voronoi();
+  const Voronoi& voronoi = ldtree.voronoi();
   EXPECT_TRUE(voronoi.isBuilt());
   EXPECT_EQ(voronoi.numPoints(), points.size());
 }
@@ -228,7 +219,7 @@ TEST_F(LDTreeTest, TreeAccessor) {
   LDTree ldtree(points);
   ldtree.build();
 
-  const Tree &tree = ldtree.tree();
+  const Tree& tree = ldtree.tree();
   EXPECT_TRUE(tree.isBuilt());
   EXPECT_GT(tree.size(), 0);
 }

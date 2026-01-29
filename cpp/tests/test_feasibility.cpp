@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <treeco/Feasibility.hpp>
 
 using namespace treeco;
@@ -11,21 +12,21 @@ class FeasibilityTest : public ::testing::Test {
 protected:
   // Simple 2D pool: directions including axis-aligned (with 0s)
   std::vector<TernaryVector> pool2D = {
-      {1, 0},  // x1
-      {0, 1},  // x2
-      {1, 1},  // x1 + x2
-      {1, -1}, // x1 - x2
+      {1, 0},   // x1
+      {0, 1},   // x2
+      {1, 1},   // x1 + x2
+      {1, -1},  // x1 - x2
   };
 
   // 3D pool
   std::vector<TernaryVector> pool3D = {
-      {1, 0, 0}, // x1
-      {0, 1, 0}, // x2
-      {0, 0, 1}, // x3
-      {1, 1, 0}, // x1 + x2
-      {1, 0, 1}, // x1 + x3
-      {0, 1, 1}, // x2 + x3
-      {1, 1, 1}, // x1 + x2 + x3
+      {1, 0, 0},  // x1
+      {0, 1, 0},  // x2
+      {0, 0, 1},  // x3
+      {1, 1, 0},  // x1 + x2
+      {1, 0, 1},  // x1 + x3
+      {0, 1, 1},  // x2 + x3
+      {1, 1, 1},  // x1 + x2 + x3
   };
 };
 
@@ -33,9 +34,7 @@ protected:
 // Constructor tests
 // ============================================================================
 
-TEST_F(FeasibilityTest, ConstructorValid) {
-  EXPECT_NO_THROW((Feasibility(pool2D)));
-}
+TEST_F(FeasibilityTest, ConstructorValid) { EXPECT_NO_THROW((Feasibility(pool2D))); }
 
 TEST_F(FeasibilityTest, ConstructorEmptyPool) {
   std::vector<TernaryVector> emptyPool;
@@ -44,21 +43,21 @@ TEST_F(FeasibilityTest, ConstructorEmptyPool) {
 
 TEST_F(FeasibilityTest, ConstructorDimensionMismatch) {
   std::vector<TernaryVector> badPool = {
-      {1, 0}, {1, 0, 1} // Different dimension
+      {1, 0}, {1, 0, 1}  // Different dimension
   };
   EXPECT_THROW((Feasibility(badPool)), std::invalid_argument);
 }
 
 TEST_F(FeasibilityTest, ConstructorWithFixedConstraints) {
   Domain fixed = {
-      {{1.0, 0.0}, 0.0, Relation::GE} // x1 >= 0
+      {{1.0, 0.0}, 0.0, Relation::GE}  // x1 >= 0
   };
   EXPECT_NO_THROW((Feasibility(pool2D, fixed)));
 }
 
 TEST_F(FeasibilityTest, ConstructorFixedConstraintDimensionMismatch) {
   Domain fixed = {
-      {{1.0, 0.0, 0.0}, 0.0, Relation::GE} // Wrong dimension
+      {{1.0, 0.0, 0.0}, 0.0, Relation::GE}  // Wrong dimension
   };
   EXPECT_THROW((Feasibility(pool2D, fixed)), std::invalid_argument);
 }
@@ -99,7 +98,7 @@ TEST_F(FeasibilityTest, ContradictoryConstraintsInfeasible) {
   // x1 >= 0 and x1 <= 0 reduces to x1 = 0, still feasible
   feas.add(Cut(0, Relation::GE));
   feas.add(Cut(0, Relation::LE));
-  EXPECT_TRUE(feas.check()); // x1 = 0 is valid
+  EXPECT_TRUE(feas.check());  // x1 = 0 is valid
 }
 
 TEST_F(FeasibilityTest, StrictContradictionInfeasible) {
@@ -172,14 +171,14 @@ TEST_F(FeasibilityTest, AddSameCutMultipleTimes) {
 
   Cut cut(0, Relation::GE);
   feas.add(cut);
-  feas.add(cut); // Add same cut twice
+  feas.add(cut);  // Add same cut twice
   EXPECT_TRUE(feas.check());
 
   // Need to remove twice
   feas.remove(cut);
-  EXPECT_TRUE(feas.check()); // Still one remaining
+  EXPECT_TRUE(feas.check());  // Still one remaining
   feas.remove(cut);
-  EXPECT_TRUE(feas.check()); // Now fully removed
+  EXPECT_TRUE(feas.check());  // Now fully removed
 }
 
 // ============================================================================
@@ -214,9 +213,9 @@ TEST_F(FeasibilityTest, BoundedRegion2D) {
   // Define a bounded region: x1 >= 0, x2 >= 0, x1 + x2 <= 0
   // This means x1 >= 0, x2 >= 0, x1 + x2 <= 0
   // Only solution is x1 = x2 = 0
-  feas.add(Cut(0, Relation::GE)); // x1 >= 0
-  feas.add(Cut(1, Relation::GE)); // x2 >= 0
-  feas.add(Cut(2, Relation::LE)); // x1 + x2 <= 0
+  feas.add(Cut(0, Relation::GE));  // x1 >= 0
+  feas.add(Cut(1, Relation::GE));  // x2 >= 0
+  feas.add(Cut(2, Relation::LE));  // x1 + x2 <= 0
   EXPECT_TRUE(feas.check());
 }
 
@@ -224,9 +223,9 @@ TEST_F(FeasibilityTest, InfeasibleTriangle) {
   Feasibility feas(pool2D);
 
   // x1 > 0, x2 > 0, x1 + x2 < 0 is infeasible
-  feas.add(Cut(0, Relation::GT)); // x1 > 0
-  feas.add(Cut(1, Relation::GT)); // x2 > 0
-  feas.add(Cut(2, Relation::LT)); // x1 + x2 < 0
+  feas.add(Cut(0, Relation::GT));  // x1 > 0
+  feas.add(Cut(1, Relation::GT));  // x2 > 0
+  feas.add(Cut(2, Relation::LT));  // x1 + x2 < 0
   EXPECT_FALSE(feas.check());
 }
 
@@ -248,7 +247,7 @@ TEST_F(FeasibilityTest, Feasibility3DWithDiagonal) {
   feas.add(Cut(0, Relation::GE));
   feas.add(Cut(1, Relation::GE));
   feas.add(Cut(2, Relation::GE));
-  feas.add(Cut(6, Relation::LE)); // x1 + x2 + x3 <= 0
+  feas.add(Cut(6, Relation::LE));  // x1 + x2 + x3 <= 0
   EXPECT_TRUE(feas.check());
 }
 
@@ -259,12 +258,12 @@ TEST_F(FeasibilityTest, Feasibility3DWithDiagonal) {
 TEST_F(FeasibilityTest, FixedConstraintRestrictsSpace) {
   // Fixed constraint: x1 >= 1
   Domain fixed = {
-      {{1.0, 0.0}, -1.0, Relation::GE} // x1 - 1 >= 0, i.e., x1 >= 1
+      {{1.0, 0.0}, -1.0, Relation::GE}  // x1 - 1 >= 0, i.e., x1 >= 1
   };
   Feasibility feas(pool2D, fixed);
 
   // Adding x1 <= 0 should make it infeasible
-  feas.add(Cut(0, Relation::LE)); // x1 <= 0
+  feas.add(Cut(0, Relation::LE));  // x1 <= 0
   EXPECT_FALSE(feas.check());
 }
 
@@ -324,7 +323,7 @@ TEST_F(FeasibilityTest, SequentialAddRemove) {
   feas.add(Cut(1, Relation::GE));
   EXPECT_TRUE(feas.check());
 
-  feas.add(Cut(0, Relation::LT)); // Now x1 >= 0 and x1 < 0 -> infeasible
+  feas.add(Cut(0, Relation::LT));  // Now x1 >= 0 and x1 < 0 -> infeasible
   EXPECT_FALSE(feas.check());
 
   feas.remove(Cut(0, Relation::LT));
@@ -365,15 +364,11 @@ TEST_F(FeasibilityTest, ManyAddsAndRemoves) {
   Feasibility feas(pool2D);
 
   // Add all GE constraints
-  for (Index i = 0; i < pool2D.size(); ++i) {
-    feas.add(Cut(i, Relation::GE));
-  }
+  for (Index i = 0; i < pool2D.size(); ++i) { feas.add(Cut(i, Relation::GE)); }
   EXPECT_TRUE(feas.check());
 
   // Remove all
-  for (Index i = 0; i < pool2D.size(); ++i) {
-    feas.remove(Cut(i, Relation::GE));
-  }
+  for (Index i = 0; i < pool2D.size(); ++i) { feas.remove(Cut(i, Relation::GE)); }
   EXPECT_TRUE(feas.check());
 }
 
