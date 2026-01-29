@@ -62,15 +62,11 @@ Index Tree::addRoot(const std::vector<Index>& pointsIds, Index splitId) {
 
   if (rootId_ != INVALID_INDEX) { throw std::runtime_error("Root already set"); }
 
-  if (pointsIds.size() == 0 && splitId == INVALID_INDEX) {
-    throw std::runtime_error("Cannot add root with no points and no split");
-  }
-
   if (pointsIds.size() > 0 && splitId != INVALID_INDEX) {
     throw std::runtime_error("Cannot add root with both points and split");
   }
 
-  NodeType rootType = pointsIds.size() > 0 ? NodeType::LEAF : NodeType::NODE;
+  NodeType rootType = splitId == INVALID_INDEX ? NodeType::LEAF : NodeType::NODE;
 
   Node root = Node{0, rootType, pointsIds, splitId};
   rootId_ = nodes_.size();
@@ -87,16 +83,12 @@ Index Tree::addRoot(const std::vector<Index>& pointsIds, Index splitId) {
 Index Tree::addNode(Index parentId, Relation relation, const std::vector<Index>& pointsIds, Index splitId) {
   if (parentId < 0 || parentId >= nodes_.size()) { throw std::out_of_range("Parent index out of range"); }
 
-  if (pointsIds.size() == 0 && splitId == INVALID_INDEX) {
-    throw std::runtime_error("Cannot add node with no points and no split");
-  }
-
   if (pointsIds.size() > 0 && splitId != INVALID_INDEX) {
     throw std::runtime_error("Cannot add node with both points and split");
   }
 
   Node& parent = nodes_.at(parentId);
-  NodeType nodeType = pointsIds.size() > 0 ? NodeType::LEAF : NodeType::NODE;
+  NodeType nodeType = splitId == INVALID_INDEX ? NodeType::LEAF : NodeType::NODE;
 
   if (parent.childIds.find(relation) != parent.childIds.end()) { throw std::runtime_error("Child already exists."); }
 
