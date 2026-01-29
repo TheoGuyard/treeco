@@ -96,7 +96,7 @@ class DynprogStats:
         num_states_closed: Number of DP states closed
         num_states_leafed: Number of DP states leafed
         num_states_pruned: Number of DP states pruned
-        num_feasibility_checks: Number of feasibility checks performed
+        lp_solved: Number of feasibility checks performed
         optimal_depth: Optimal tree depth found
     """
 
@@ -108,7 +108,7 @@ class DynprogStats:
     num_states_closed: int
     num_states_leafed: int
     num_states_pruned: int
-    num_feasibility_checks: int
+    lp_solved: int
     optimal_depth: int
 
 DynprogLogs = List[DynprogStats]

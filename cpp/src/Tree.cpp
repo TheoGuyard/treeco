@@ -2,8 +2,6 @@
 
 namespace treeco {
 
-Tree::Tree(const Voronoi& voronoi) : voronoi_(voronoi) {}
-
 void Tree::synthetize(const Dynprog& dynprog, const TreeParams& params) {
   clear();
 
@@ -104,93 +102,6 @@ Index Tree::addNode(Index parentId, Relation relation, const std::vector<Index>&
   size_++;
 
   return nodeId;
-}
-
-std::vector<SimplexVector> Tree::query(const std::vector<double>& cost) const {
-  if (!isBuilt()) { throw std::runtime_error("Tree is not built yet."); }
-
-  Index nodeId = rootId_;
-  while (nodes_[nodeId].type == NodeType::NODE) {
-    const Node& node = nodes_[nodeId];
-    const TernaryVector& split = voronoi_.split(node.splitId);
-    double splitSide = dot(split, cost);
-
-    Relation relation;
-    if (splitSide <= -params_.tolerance) {
-      relation = Relation::LT;
-    } else if (splitSide >= params_.tolerance) {
-      relation = Relation::GT;
-    } else {
-      if (node.childIds.find(Relation::EQ) != node.childIds.end()) {
-        relation = Relation::EQ;
-      } else {
-        relation = Relation::LT;
-      }
-    }
-    nodeId = node.childIds.at(relation);
-  }
-
-  std::vector<SimplexVector> points;
-  if (nodes_[nodeId].type == NodeType::LEAF) {
-    points.reserve(nodes_[nodeId].pointsIds.size());
-    for (int idx : nodes_[nodeId].pointsIds) { points.push_back(voronoi_.point(idx)); }
-  } else {
-    throw std::runtime_error("Reached a non-leaf node during query.");
-  }
-
-  return points;
-}
-
-void Tree::pprint(bool tightDisplay, std::ostream* outputStream) const {
-  if (!isBuilt()) { throw std::runtime_error("Tree is not built yet."); }
-
-  if (rootId_ == INVALID_INDEX) { throw std::runtime_error("Tree root is not defined."); }
-
-  if (nodes_.empty()) {
-    *params_.outputStream << "Empty tree\n";
-    return;
-  }
-
-  pprintNode(nodes_.at(rootId_), "", "", true, tightDisplay, outputStream);
-}
-
-void Tree::pprintNode(const Node& node, const std::string& prefix, const std::string& label, bool last,
-                      bool tightDisplay, std::ostream* outputStream) const {
-  std::ostream& out = *outputStream;
-
-  std::string branch = (label.empty() ? "" : (last ? "└── " : "├── "));
-  out << prefix << branch << label;
-  if (!label.empty()) { out << " "; }
-  if (node.type == NodeType::LEAF) {
-    out << "Leaf {";
-    for (Index i = 0; i < node.pointsIds.size(); ++i) {
-      if (tightDisplay) {
-        out << node.pointsIds[i];
-      } else {
-        SimplexVector scaledPoint = voronoi_.point(node.pointsIds[i]);
-        BinaryVector point = unscaleBinary(scaledPoint);
-        printVector(point, outputStream);
-      }
-      if (i + 1 < node.pointsIds.size()) out << ",";
-    }
-    out << "}" << std::endl;
-  } else {
-    out << "Node (";
-    if (tightDisplay) {
-      out << node.splitId;
-    } else {
-      TernaryVector split = voronoi_.split(node.splitId);
-      printVector(split, outputStream);
-    }
-    out << ")" << std::endl;
-    std::string childPrefix = prefix + (label.empty() ? "" : (last ? "    " : "│   "));
-    Index count = 0;
-    for (const auto& [relation, childId] : node.childIds) {
-      const Node& child = nodes_.at(childId);
-      bool last = (++count == node.childIds.size());
-      pprintNode(child, childPrefix, relationTypeToString(relation), last, tightDisplay, outputStream);
-    }
-  }
 }
 
 void Tree::clear() {

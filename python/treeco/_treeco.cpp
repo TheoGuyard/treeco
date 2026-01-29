@@ -4,16 +4,18 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
 
+#include "treeco/Dynprog.hpp"
 #include "treeco/Geometry.hpp"
+#include "treeco/IO.hpp"
 #include "treeco/LDTree.hpp"
 #include "treeco/Problem.hpp"
 #include "treeco/Problem/Explicit.hpp"
 #include "treeco/Problem/Knapsack.hpp"
 #include "treeco/Problem/Maxcut.hpp"
 #include "treeco/Problem/Tsp.hpp"
-#include "treeco/IO.hpp"
-#include "treeco/Dynprog.hpp"
+#include "treeco/Tree.hpp"
 #include "treeco/Types.hpp"
+#include "treeco/Voronoi.hpp"
 
 namespace py = pybind11;
 
@@ -74,6 +76,25 @@ void bind_module_geometry(py::module_ &m) {
     m.def("non_negative_orthant", &nonNegativeOrthant, py::arg("dimension"));
     m.def("negative_orthant", &negativeOrthant, py::arg("dimension"));
     m.def("non_positive_orthant", &nonPositiveOrthant, py::arg("dimension"));
+
+    py::class_<Cut>(m, "Cut")
+        .def_readonly("hid", &Cut::hid)
+        .def_readonly("dir", &Cut::dir)
+        .def(py::pickle(
+            [](const Cut &c) { return py::make_tuple(c.hid, c.dir); },
+            [](py::tuple t) { return Cut{t[0].cast<Index>(), t[1].cast<Relation>()}; } 
+        ));
+        ;
+
+    py::class_<Cone>(m, "Cone")
+        .def_property_readonly("cuts", &Cone::cuts)
+        .def_property_readonly("is_open", &Cone::isOpen)
+        .def_property_readonly("contains_origin", &Cone::containsOrigin)
+        .def(py::pickle(
+            [](const Cone &c) { return py::make_tuple(c.cuts()); },
+            [](py::tuple t) { return Cone(t[0].cast<std::vector<Cut>>()); }
+        ))
+        ;
 }
 
 void bind_module_problem(py::module_ &m) {
@@ -125,9 +146,68 @@ void bind_module_problem(py::module_ &m) {
 
 void bind_module_voronoi(py::module_ &m) {
 
+    py::class_<Face>(m, "Face")
+        .def(py::init<>())
+        .def_readonly("point_id", &Face::pointId)
+        .def_readonly("cone", &Face::cone)
+        .def(py::pickle(
+            [](const Face &f) { return py::make_tuple(f.pointId, f.cone); },
+            [](py::tuple t) { return Face{t[0].cast<Index>(), t[1].cast<Cone>()}; } 
+        ));
+        ;
+
+    py::class_<Edge>(m, "Edge")
+        .def(py::init<>())
+        .def_readonly("split_id", &Edge::splitId)
+        .def_readonly("le_face_id", &Edge::leFaceId)
+        .def_readonly("ge_face_id", &Edge::geFaceId)
+        .def(py::pickle(
+            [](const Edge &e) { return py::make_tuple(e.splitId, e.leFaceId, e.geFaceId); },
+            [](py::tuple t) { return Edge{t[0].cast<Index>(), t[1].cast<Index>(), t[2].cast<Index>()}; } 
+        ));
+        ;
+
+    py::class_<VoronoiParams>(m, "VoronoiParams")
+        .def(py::init<>())
+        .def_readwrite("verbose", &VoronoiParams::verbose)
+        // .def_readwrite("output_stream", &VoronoiParams::outputStream)
+        .def_readwrite("log_interval", &VoronoiParams::logInterval)        
+        .def_readwrite("time_limit", &VoronoiParams::timeLimit)
+        .def_readwrite("tolerance", &VoronoiParams::tolerance)
+        .def_readwrite("deduplicate", &VoronoiParams::deduplicate)
+        .def(py::pickle(
+            [](const VoronoiParams &p) {
+                return py::make_tuple(
+                    p.verbose,
+                    // p.outputStream,
+                    p.logInterval,
+                    p.timeLimit,
+                    p.tolerance,
+                    p.deduplicate
+                );
+            },
+            [](py::tuple t) {
+                return VoronoiParams{
+                    t[0].cast<bool>(),
+                    nullptr,
+                    t[1].cast<double>(),
+                    t[2].cast<double>(),
+                    t[3].cast<double>(),
+                    t[4].cast<bool>()
+                };
+            }
+        ))
+        ;
+
     py::class_<VoronoiStats>(m, "VoronoiStats")
+        .def(py::init<>())
+        .def_readonly("is_built", &VoronoiStats::isBuilt)
         .def_readonly("build_time", &VoronoiStats::buildTime)
         .def_readonly("lp_solved", &VoronoiStats::lpSolved)
+        .def(py::pickle(
+            [](const VoronoiStats &s) { return py::make_tuple(s.isBuilt, s.buildTime, s.lpSolved); },
+            [](py::tuple t) { return VoronoiStats{t[0].cast<bool>(), t[1].cast<double>(), t[2].cast<Index>()}; }
+        ))
         ;
 
     py::class_<Voronoi>(m, "Voronoi")
@@ -136,6 +216,7 @@ void bind_module_voronoi(py::module_ &m) {
         .def_property_readonly("num_splits", &Voronoi::numSplits)
         .def_property_readonly("num_faces", &Voronoi::numFaces)
         .def_property_readonly("num_edges", &Voronoi::numEdges)
+        .def_property_readonly("params", &Voronoi::params, py::return_value_policy::copy)
         .def_property_readonly("stats", &Voronoi::stats, py::return_value_policy::reference_internal)
         ;
 }
@@ -184,8 +265,38 @@ void bind_module_dynprog(py::module_ &m) {
         .def_readonly("num_states_closed", &DynprogStats::numStatesClosed)
         .def_readonly("num_states_leafed", &DynprogStats::numStatesLeafed)
         .def_readonly("num_states_pruned", &DynprogStats::numStatesPruned)
-        .def_readonly("num_feasibility_checks", &DynprogStats::numFeasibilityChecks)
+        .def_readonly("lp_solved", &DynprogStats::lpSolved)
         .def_readonly("optimal_depth", &DynprogStats::optimalDepth)
+        .def(py::pickle(
+            [](const DynprogStats &s) {
+                return py::make_tuple(
+                    s.runTime,
+                    s.numIters,
+                    s.numEvals,
+                    s.numStates,
+                    s.numStatesBuilt,
+                    s.numStatesClosed,
+                    s.numStatesLeafed,
+                    s.numStatesPruned,
+                    s.lpSolved,
+                    s.optimalDepth
+                );
+            },
+            [](py::tuple t) {
+                return DynprogStats{
+                    t[0].cast<double>(),
+                    t[1].cast<Index>(),
+                    t[2].cast<Index>(),
+                    t[3].cast<Index>(),
+                    t[4].cast<Index>(),
+                    t[5].cast<Index>(),
+                    t[6].cast<Index>(),
+                    t[7].cast<Index>(),
+                    t[8].cast<Index>(),
+                    t[9].cast<Index>()
+                };
+            }
+        ))
         ;
 
     py::bind_vector<DynprogLogs>(m, "DynprogLogs");
@@ -193,16 +304,100 @@ void bind_module_dynprog(py::module_ &m) {
 
 void bind_module_tree(py::module_ &m) {
 
+    py::enum_<NodeType>(m, "NodeType")
+        .value("undefined", NodeType::UNDEFINED)
+        .value("node", NodeType::NODE)
+        .value("leaf", NodeType::LEAF)
+        ;
+
+    py::class_<Node>(m, "Node")
+        .def(py::init<>())
+        .def_readonly("depth", &Node::depth)
+        .def_readonly("type", &Node::type)
+        .def_readonly("points_ids", &Node::pointsIds)
+        .def_readonly("split_id", &Node::splitId)
+        .def_readonly("child_ids", &Node::childIds)
+        .def(py::pickle(
+            [](const Node &n) {
+                return py::make_tuple(
+                    n.depth,
+                    n.type,
+                    n.pointsIds,
+                    n.splitId,
+                    n.childIds
+                );
+            },
+            [](py::tuple t) {
+                return Node{
+                    t[0].cast<Index>(),
+                    t[1].cast<NodeType>(),
+                    t[2].cast<std::vector<Index>>(),
+                    t[3].cast<Index>(),
+                    t[4].cast<std::map<Relation, Index>>()
+                };
+            }
+        ))
+        ;
+
+    py::class_<TreeParams>(m, "TreeParams")
+        .def(py::init<>())
+        .def_readonly("verbose", &TreeParams::verbose)
+        // .def_readonly("output_stream", &TreeParams::outputStream)
+        .def_readonly("log_interval", &TreeParams::logInterval)
+        .def_readonly("time_limit", &TreeParams::timeLimit)
+        .def(py::pickle(
+            [](const TreeParams &p) {
+                return py::make_tuple(
+                    p.verbose,
+                    // p.outputStream,
+                    p.logInterval,
+                    p.timeLimit
+                );
+            },
+            [](py::tuple t) {
+                return TreeParams{
+                    t[0].cast<bool>(),
+                    nullptr,
+                    t[1].cast<double>(),
+                    t[2].cast<double>()
+                };
+            }
+        ))
+        ;
+
     py::class_<TreeStats>(m, "TreeStats")
+        .def(py::init<>())
+        .def_readonly("is_built", &TreeStats::isBuilt)
         .def_readonly("build_time", &TreeStats::buildTime)
         .def_readonly("dynprog_stats", &TreeStats::dynprogStats, py::return_value_policy::reference_internal)
         .def_readonly("dynprog_logs", &TreeStats::dynprogLogs, py::return_value_policy::reference_internal)
+        .def(py::pickle(
+            [](const TreeStats &s) {
+                return py::make_tuple(
+                    s.isBuilt,
+                    s.buildTime,
+                    s.dynprogStats,
+                    s.dynprogLogs
+                );
+            },
+            [](py::tuple t) {
+                return TreeStats{
+                    t[0].cast<bool>(),
+                    t[1].cast<double>(),
+                    t[2].cast<DynprogStats>(),
+                    t[3].cast<DynprogLogs>()
+                };
+            }
+        ))
         ;
 
     py::class_<Tree>(m, "Tree")
+        .def_property_readonly("nodes", &Tree::nodes, py::return_value_policy::reference_internal)
+        .def_property_readonly("root_id", &Tree::rootId)
         .def_property_readonly("size", &Tree::size)
         .def_property_readonly("width", &Tree::width)
         .def_property_readonly("depth", &Tree::depth)
+        .def_property_readonly("params", &Tree::params)
         .def_property_readonly("stats", &Tree::stats, py::return_value_policy::reference_internal)
         ;
 }
@@ -210,7 +405,12 @@ void bind_module_tree(py::module_ &m) {
 void bind_module_ldtree(py::module_ &m) {
     
     py::class_<LDTreeStats>(m, "LDTreeStats")
+        .def(py::init<>())
         .def_readonly("build_time", &LDTreeStats::buildTime)
+        .def(py::pickle(
+            [](const LDTreeStats &s) { return py::make_tuple(s.buildTime); },
+            [](py::tuple t) { return LDTreeStats{t[0].cast<double>()}; }
+        ))
         ;
 
     py::class_<LDTree>(m, "LDTree")
@@ -274,6 +474,7 @@ void bind_module_ldtree(py::module_ &m) {
             py::call_guard<py::gil_scoped_release>())
         .def("query", &LDTree::query,
             py::arg("cost"),
+            py::arg("tolerance")    = 1e-8,
             py::arg("check_domain") = false,
             py::call_guard<py::gil_scoped_release>())
         .def("pprint", [](const LDTree& self, bool tightDisplay) {
@@ -290,6 +491,52 @@ void bind_module_ldtree(py::module_ &m) {
         .def_property_readonly("voronoi", &LDTree::voronoi, py::return_value_policy::reference_internal)
         .def_property_readonly("tree", &LDTree::tree, py::return_value_policy::reference_internal)
         .def_property_readonly("stats", &LDTree::stats, py::return_value_policy::reference_internal)
+        // Serialization
+        .def(py::pickle(
+            [](const LDTree &ldtree) {
+                const Voronoi& voronoi = ldtree.voronoi();
+                const Tree& tree = ldtree.tree();
+                return py::make_tuple(
+                    // Pure LDTree data
+                    ldtree.domain(),
+                    ldtree.stats(),
+                    // Voronoi data
+                    voronoi.points(),
+                    voronoi.splits(),
+                    voronoi.faces(),
+                    voronoi.edges(),
+                    voronoi.params(),
+                    voronoi.stats(),
+                    // Tree data
+                    tree.nodes(),
+                    tree.params(),
+                    tree.stats(),
+                    tree.rootId(),
+                    tree.size(),
+                    tree.width(),
+                    tree.depth()
+                );
+            },
+            [](py::tuple data) {
+                return LDTree(
+                    data[0].cast<Domain>(),
+                    data[1].cast<LDTreeStats>(),
+                    data[2].cast<std::vector<SimplexVector>>(),
+                    data[3].cast<std::vector<TernaryVector>>(),
+                    data[4].cast<std::vector<Face>>(),
+                    data[5].cast<std::vector<Edge>>(),
+                    data[6].cast<VoronoiParams>(),
+                    data[7].cast<VoronoiStats>(),
+                    data[8].cast<std::vector<Node>>(),
+                    data[9].cast<TreeParams>(),
+                    data[10].cast<TreeStats>(),
+                    data[11].cast<Index>(),
+                    data[12].cast<Index>(),
+                    data[13].cast<Index>(),
+                    data[14].cast<Index>()
+                );
+            }
+        ))
         ;
 }
 

@@ -303,7 +303,7 @@ struct DynprogStats {
   Index numStatesClosed = 0;       // States closed by optimality
   Index numStatesLeafed = 0;       // States identified as leaves
   Index numStatesPruned = 0;       // States pruned by bounds
-  Index numFeasibilityChecks = 0;  // LP feasibility checks performed
+  Index lpSolved = 0;              // LP feasibility checks performed
   Index optimalDepth = MAX_DEPTH;  // Optimal tree depth found
 };
 

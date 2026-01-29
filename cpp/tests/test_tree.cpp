@@ -29,12 +29,12 @@ protected:
 // ============================================================================
 
 TEST_F(TreeTest, Construction) {
-  Tree tree(*voronoi);
+  Tree tree;
   EXPECT_FALSE(tree.isBuilt());
 }
 
 TEST_F(TreeTest, ConstructionDynprogNotRun) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   EXPECT_THROW(tree.synthetize(dynprog), std::runtime_error);
 }
@@ -44,7 +44,7 @@ TEST_F(TreeTest, ConstructionDynprogNotRun) {
 // ============================================================================
 
 TEST_F(TreeTest, SynthetizeBasic) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   dynprog.run();
 
@@ -55,7 +55,7 @@ TEST_F(TreeTest, SynthetizeBasic) {
 }
 
 TEST_F(TreeTest, SynthetizeWithParams) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   dynprog.run();
 
@@ -63,7 +63,6 @@ TEST_F(TreeTest, SynthetizeWithParams) {
   TreeParams params;
   params.verbose = false;
   params.outputStream = &oss;
-  params.tolerance = 1e-6;
 
   tree.synthetize(dynprog, params);
 
@@ -71,7 +70,7 @@ TEST_F(TreeTest, SynthetizeWithParams) {
 }
 
 TEST_F(TreeTest, SynthetizeStats) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   dynprog.run();
 
@@ -87,7 +86,7 @@ TEST_F(TreeTest, SynthetizeStats) {
 // ============================================================================
 
 TEST_F(TreeTest, Clear) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   dynprog.run();
   tree.synthetize(dynprog);
@@ -101,52 +100,11 @@ TEST_F(TreeTest, Clear) {
 }
 
 // ============================================================================
-// Query Tests
-// ============================================================================
-
-TEST_F(TreeTest, QueryBasic) {
-  Tree tree(*voronoi);
-  Dynprog dynprog(*voronoi);
-  dynprog.run();
-  tree.synthetize(dynprog);
-
-  // Query with a cost vector
-  std::vector<double> cost(voronoi->dimPoints(), 1.0);
-  std::vector<SimplexVector> result = tree.query(cost);
-
-  EXPECT_FALSE(result.empty());
-}
-
-TEST_F(TreeTest, QueryDifferentCosts) {
-  Tree tree(*voronoi);
-  Dynprog dynprog(*voronoi);
-  dynprog.run();
-  tree.synthetize(dynprog);
-
-  // Query with different cost vectors
-  std::vector<double> cost1(voronoi->dimPoints(), 1.0);
-  std::vector<double> cost2(voronoi->dimPoints(), -1.0);
-
-  std::vector<SimplexVector> result1 = tree.query(cost1);
-  std::vector<SimplexVector> result2 = tree.query(cost2);
-
-  EXPECT_FALSE(result1.empty());
-  EXPECT_FALSE(result2.empty());
-}
-
-TEST_F(TreeTest, QueryNotBuiltThrows) {
-  Tree tree(*voronoi);
-  std::vector<double> cost(voronoi->dimPoints(), 1.0);
-
-  EXPECT_THROW(tree.query(cost), std::runtime_error);
-}
-
-// ============================================================================
 // Tree Structure Tests
 // ============================================================================
 
 TEST_F(TreeTest, NodesAccessor) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   dynprog.run();
   tree.synthetize(dynprog);
@@ -157,7 +115,7 @@ TEST_F(TreeTest, NodesAccessor) {
 }
 
 TEST_F(TreeTest, NodeAccessor) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   dynprog.run();
   tree.synthetize(dynprog);
@@ -169,7 +127,7 @@ TEST_F(TreeTest, NodeAccessor) {
 }
 
 TEST_F(TreeTest, TreeDimensions) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   dynprog.run();
   tree.synthetize(dynprog);
@@ -180,44 +138,11 @@ TEST_F(TreeTest, TreeDimensions) {
 }
 
 // ============================================================================
-// Pretty Print Tests
-// ============================================================================
-
-TEST_F(TreeTest, PprintBasic) {
-  Tree tree(*voronoi);
-  Dynprog dynprog(*voronoi);
-  dynprog.run();
-  tree.synthetize(dynprog);
-
-  std::ostringstream oss;
-  EXPECT_NO_THROW(tree.pprint(false, &oss));
-  EXPECT_FALSE(oss.str().empty());
-}
-
-TEST_F(TreeTest, PprintTight) {
-  Tree tree(*voronoi);
-  Dynprog dynprog(*voronoi);
-  dynprog.run();
-  tree.synthetize(dynprog);
-
-  std::ostringstream oss;
-  EXPECT_NO_THROW(tree.pprint(true, &oss));
-  EXPECT_FALSE(oss.str().empty());
-}
-
-TEST_F(TreeTest, PprintNotBuiltThrows) {
-  Tree tree(*voronoi);
-  std::ostringstream oss;
-
-  EXPECT_THROW(tree.pprint(false, &oss), std::runtime_error);
-}
-
-// ============================================================================
 // Node Type Tests
 // ============================================================================
 
 TEST_F(TreeTest, LeafNodesHavePoints) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   dynprog.run();
   tree.synthetize(dynprog);
@@ -232,7 +157,7 @@ TEST_F(TreeTest, LeafNodesHavePoints) {
 }
 
 TEST_F(TreeTest, InternalNodesHaveSplits) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   dynprog.run();
   tree.synthetize(dynprog);
@@ -251,7 +176,7 @@ TEST_F(TreeTest, InternalNodesHaveSplits) {
 // ============================================================================
 
 TEST_F(TreeTest, StreamOperator) {
-  Tree tree(*voronoi);
+  Tree tree;
   Dynprog dynprog(*voronoi);
   dynprog.run();
   tree.synthetize(dynprog);

@@ -10,7 +10,7 @@ std::ostream& operator<<(std::ostream& oss, const DynprogStats& stats) {
   oss << "  states created : " << stats.numStates << "\n";
   oss << "  states closed  : " << stats.numStatesClosed << "\n";
   oss << "  states pruned  : " << stats.numStatesPruned << "\n";
-  oss << "  lp solved      : " << stats.numFeasibilityChecks << "\n";
+  oss << "  lp solved      : " << stats.lpSolved << "\n";
   if (stats.optimalDepth == MAX_DEPTH) {
     oss << "  optimal depth  : inf (not found)";
   } else {
@@ -97,7 +97,7 @@ void Dynprog::run(const DynprogParams& params) {
   // Fill remaining statistics fields
   stats_.runTime = std::chrono::duration<double>(Clock::now() - startTime_).count();
   stats_.numStates = states_.size();
-  stats_.numFeasibilityChecks = feasibility_->numSolve();
+  stats_.lpSolved = feasibility_->numSolve();
   stats_.optimalDepth = states_[rootId_].ubHeight;
 
   logFooter();
@@ -881,7 +881,7 @@ void Dynprog::logSave() {
   if (!params_.logSave) return;
   stats_.runTime = elapsedTime(startTime_);
   stats_.numStates = states_.size();
-  stats_.numFeasibilityChecks = feasibility_->numSolve();
+  stats_.lpSolved = feasibility_->numSolve();
   stats_.optimalDepth = states_[rootId_].ubHeight;
   logs_.push_back(stats_);
 }

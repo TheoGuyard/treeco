@@ -6,7 +6,7 @@ LDTree::LDTree(const std::string& filePoints, const std::string& fileDomain)
   : LDTree(readPoints(filePoints), fileDomain.empty() ? Domain() : readDomain(fileDomain)) {}
 
 LDTree::LDTree(const std::vector<BinaryVector>& points, const Domain& domain)
-  : domain_(domain), voronoi_(scaleBinarySet(points)), tree_(voronoi_) {}
+  : domain_(domain), voronoi_(scaleBinarySet(points)), tree_() {}
 
 void LDTree::build(bool verbose, std::ostream* outputStream, double logInterval, bool logSave, double timeLimit,
                    double tolerance, bool deduplicate, bool filterChecks, Exploration exploration, Branching branching,
@@ -30,7 +30,7 @@ void LDTree::build(bool verbose, std::ostream* outputStream, double logInterval,
   dynprog.run(dynprogParams);
 
   // Step 3: Synthetize tree structure from the dynamic programming results
-  TreeParams treeParams = TreeParams{verbose, outputStream, logInterval, timeLimit - elapsedTime(startTime), tolerance};
+  TreeParams treeParams = TreeParams{verbose, outputStream, logInterval, timeLimit - elapsedTime(startTime)};
   tree_.synthetize(dynprog, treeParams);
 
   // Record statistics
@@ -46,7 +46,9 @@ void LDTree::build(bool verbose, std::ostream* outputStream, double logInterval,
   }
 };
 
-std::vector<BinaryVector> LDTree::query(const RealVector& cost, bool checkDomain) const {
+std::vector<SimplexVector> LDTree::query(const std::vector<double>& cost, double tolerance, bool checkDomain) const {
+  if (!tree_.isBuilt()) { throw std::runtime_error("Tree is not built yet."); }
+
   if (checkDomain) {
     for (const auto& [a, b, rel] : domain_) {
       double value = dot(a, cost) + b;
@@ -57,11 +59,92 @@ std::vector<BinaryVector> LDTree::query(const RealVector& cost, bool checkDomain
       }
     }
   }
-  return unscaleBinarySet(tree_.query(cost));
+
+  Index nodeId = tree_.rootId();
+
+  while (tree_.node(nodeId).type == NodeType::NODE) {
+    const Node& node = tree_.node(nodeId);
+    const TernaryVector& split = voronoi_.split(node.splitId);
+    double splitSide = dot(split, cost);
+
+    Relation relation;
+    if (splitSide <= -tolerance) {
+      relation = Relation::LT;
+    } else if (splitSide >= tolerance) {
+      relation = Relation::GT;
+    } else {
+      if (node.childIds.find(Relation::EQ) != node.childIds.end()) {
+        relation = Relation::EQ;
+      } else {
+        relation = Relation::LT;
+      }
+    }
+    nodeId = node.childIds.at(relation);
+  }
+
+  std::vector<SimplexVector> points;
+  if (tree_.node(nodeId).type == NodeType::LEAF) {
+    points.reserve(tree_.node(nodeId).pointsIds.size());
+    for (int idx : tree_.node(nodeId).pointsIds) { points.push_back(voronoi_.point(idx)); }
+  } else {
+    throw std::runtime_error("Reached a non-leaf node during query.");
+  }
+
+  return unscaleBinarySet(points);
 }
 
 void LDTree::pprint(bool tightDisplay, std::ostream* outputStream) const {
-  return tree_.pprint(tightDisplay, outputStream);
+  if (!tree_.isBuilt()) { throw std::runtime_error("Tree is not built yet."); }
+
+  Index rootId = tree_.rootId();
+
+  if (rootId == INVALID_INDEX) { throw std::runtime_error("Tree root is not defined."); }
+
+  if (tree_.size() == 0) {
+    *outputStream << "Empty tree\n";
+    return;
+  }
+
+  pprintNode(tree_.node(rootId), "", "", true, tightDisplay, outputStream);
+}
+
+void LDTree::pprintNode(const Node& node, const std::string& prefix, const std::string& label, bool last,
+                        bool tightDisplay, std::ostream* outputStream) const {
+  std::ostream& out = *outputStream;
+
+  std::string branch = (label.empty() ? "" : (last ? "└── " : "├── "));
+  out << prefix << branch << label;
+  if (!label.empty()) { out << " "; }
+  if (node.type == NodeType::LEAF) {
+    out << "Leaf {";
+    for (Index i = 0; i < node.pointsIds.size(); ++i) {
+      if (tightDisplay) {
+        out << node.pointsIds[i];
+      } else {
+        const SimplexVector& scaledPoint = voronoi_.point(node.pointsIds[i]);
+        const BinaryVector& point = unscaleBinary(scaledPoint);
+        printVector(point, outputStream);
+      }
+      if (i + 1 < node.pointsIds.size()) out << ",";
+    }
+    out << "}" << std::endl;
+  } else {
+    out << "Node (";
+    if (tightDisplay) {
+      out << node.splitId;
+    } else {
+      const TernaryVector& split = voronoi_.split(node.splitId);
+      printVector(split, outputStream);
+    }
+    out << ")" << std::endl;
+    std::string childPrefix = prefix + (label.empty() ? "" : (last ? "    " : "│   "));
+    Index count = 0;
+    for (const auto& [relation, childId] : node.childIds) {
+      const Node& child = tree_.node(childId);
+      bool last = (++count == node.childIds.size());
+      pprintNode(child, childPrefix, relationTypeToString(relation), last, tightDisplay, outputStream);
+    }
+  }
 }
 
 void LDTree::flatten(const std::string filepath, const std::string doc, bool benchmarkMode) const {

@@ -239,6 +239,12 @@ public:
   Cone(const std::set<Cut>& cuts);
 
   /**
+   * @brief Construct a cone from a vector of cuts.
+   * @param cuts The cuts defining the cone boundaries
+   */
+  Cone(const std::vector<Cut>& cuts);
+
+  /**
    * @brief Add a cut boundary to the cone.
    * @param cut The cut to add
    */
