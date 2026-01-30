@@ -10,6 +10,7 @@
 #define TREECO_DYNPROG_HPP
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <functional>
@@ -348,10 +349,11 @@ inline std::string dynprogStatusToString(DynprogStatus status) {
  * @brief Information about a candidate split at a state.
  */
 struct Split {
+  Index id = INVALID_INDEX;                                // Split index in Voronoi diagram
   std::optional<bool> valid = std::nullopt;                // Whether the split is valid for this state
   double score = std::numeric_limits<double>::infinity();  // Split quality score
-  std::map<Relation, Index> childNumFaces = {};            // Number of faces in each child
-  std::map<Relation, Index> childIds = {};                 // Child state indices
+  std::array<Index, 3> childNumFaces = {};                 // Number of faces in each child
+  std::array<Index, 3> childIds = {};                      // Child state indices
   bool isClosed = false;                                   // Whether the split is fully explored
 };
 
@@ -362,22 +364,21 @@ struct Split {
  * Voronoi faces that intersect it.
  */
 struct State {
-  Cone region;                         // Polyhedral region of the state
-  std::vector<Index> faceIds = {};     // Voronoi face indices in this region
-  std::vector<Index> splitIds = {};    // Valid split indices for this state
-  std::map<Index, Split> splits = {};  // Split information (keyed by split id)
-  Index lbHeight = 0;                  // Lower bound on optimal subtree height
-  Index ubHeight = MAX_DEPTH;          // Upper bound on optimal subtree height
-  Index splitId = INVALID_INDEX;       // Best split index found
-  Index numSplitsBuilt = 0;            // Number of splits fully explored
-  bool isBuilt = false;                // Whether all splits have been explored
-  bool isClosed = false;               // Whether state is closed (leaf, pruned, or optimal)
+  Cone region;                      // Polyhedral region of the state
+  std::vector<Index> faceIds = {};  // Voronoi face indices in this region
+  std::vector<Split> splits = {};   // Valid splits for this state
+  Index lbHeight = 0;               // Lower bound on optimal subtree height
+  Index ubHeight = MAX_DEPTH;       // Upper bound on optimal subtree height
+  Index splitId = INVALID_INDEX;    // Best split index found
+  Index numSplitsBuilt = 0;         // Number of splits fully explored
+  bool isBuilt = false;             // Whether all splits have been explored
+  bool isClosed = false;            // Whether state is closed (leaf, pruned, or optimal)
 
   /// Get the depth of this state in the tree
   Index depth() const { return static_cast<Index>(region.numCuts()); }
 
   /// Check if this state is a leaf (single face or no valid splits)
-  bool isLeaf() const { return faceIds.size() <= 1 || splitIds.size() == 0; }
+  bool isLeaf() const { return faceIds.size() <= 1 || splits.size() == 0; }
 };
 
 // ----------------------------------------------------------------------------
@@ -391,7 +392,7 @@ struct DynprogParams {
   bool verbose = false;                                        // Enable verbose logging
   std::ostream* outputStream = &std::cout;                     // Output stream for logs
   double logInterval = 5.0;                                    // Logging interval in seconds
-  bool logSave = true;                                         // Save logs at each iteration
+  bool logSave = false;                                        // Save logs at each iteration
   double timeLimit = std::numeric_limits<double>::infinity();  // Time limit in seconds
   double tolerance = 1e-8;                                     // Numerical tolerance
   bool filterChecks = true;                                    // Use filtering for fast validity checks
@@ -445,6 +446,8 @@ public:
   /// Get the root state index
   Index rootId() const { return rootId_; }
 
+  const std::vector<Relation>& branchDirections() const { return branchDirections_; }
+
 private:
   const Voronoi& voronoi_;  // Voronoi diagram reference
   Domain domain_;           // Input domain constraints
@@ -467,19 +470,19 @@ private:
   void initRootState();
   void initPositions();
 
-  State createState(Index parentId, Index splitId, Relation cutDir);
+  State createState(State& state, Split& split, Relation cutDir);
   void buildState(Index stateId, Index kSplits);
   void evaluateState(Index stateId, Index kSplits);
   void evaluateLowerBound(State& state);
-  void evaluateSplitScore(Index stateId, Index splitId);
+  void evaluateScore(State& state, Split& split);
+  void evaluateValidity(State& state, Split& split, bool externalStateCuts = false);
+  bool checkChildFace(State& state, Split& split, Relation cutDir, Index faceId, bool externalChildCuts = false);
   void updateStatus();
 
   Relation getPosition(Index faceId, Index splitId, bool externalInteriorFaceCuts = false);
-  bool checkSplitValidity(Index stateId, Index splitId, bool externalStateCuts = false);
-  bool checkChildFace(Index stateId, Index splitId, Relation cutDir, Index faceId, bool externalChildCuts = false);
-  std::optional<bool> inferSplitValidity(Index stateId, Index splitId);
-  std::optional<bool> inferChildFace(Index stateId, Index splitId, Relation cutDir, Index faceId);
-  bool childContainsFaceCenter(Index stateId, Index splitId, Relation cutDir, Index faceId);
+  std::optional<bool> inferValidity(State& state, Split& split);
+  std::optional<bool> inferChildFace(State& state, Split& split, Relation cutDir, Index faceId);
+  bool childContainsFaceCenter(State& state, Split& split, Relation cutDir, Index faceId);
 
   std::vector<Index> getIterationRange() const;
   bool checkTimeLimit() const;

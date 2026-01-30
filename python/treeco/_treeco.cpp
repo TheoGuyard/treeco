@@ -316,7 +316,7 @@ void bind_module_tree(py::module_ &m) {
         .def_readonly("type", &Node::type)
         .def_readonly("points_ids", &Node::pointsIds)
         .def_readonly("split_id", &Node::splitId)
-        .def_readonly("child_ids", &Node::childIds)
+        .def_readonly("children", &Node::children)
         .def(py::pickle(
             [](const Node &n) {
                 return py::make_tuple(
@@ -324,7 +324,7 @@ void bind_module_tree(py::module_ &m) {
                     n.type,
                     n.pointsIds,
                     n.splitId,
-                    n.childIds
+                    n.children
                 );
             },
             [](py::tuple t) {
@@ -333,7 +333,7 @@ void bind_module_tree(py::module_ &m) {
                     t[1].cast<NodeType>(),
                     t[2].cast<std::vector<Index>>(),
                     t[3].cast<Index>(),
-                    t[4].cast<std::map<Relation, Index>>()
+                    t[4].cast<std::vector<std::pair<Relation, Index>>>()
                 };
             }
         ))

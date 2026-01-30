@@ -48,11 +48,11 @@ enum class NodeType {
  * or a leaf node (with optimal solution points).
  */
 struct Node {
-  Index depth = INVALID_INDEX;              // Depth in the tree (0 = root)
-  NodeType type = NodeType::UNDEFINED;      // Node type
-  std::vector<Index> pointsIds = {};        // Solution point indices (only for LEAF)
-  Index splitId = INVALID_INDEX;            // Split hyperplane index (only for NODE)
-  std::map<Relation, Index> childIds = {};  // Child node indices by relation (only for NODE)
+  Index depth = INVALID_INDEX;                            // Depth in the tree (0 = root)
+  NodeType type = NodeType::UNDEFINED;                    // Node type
+  std::vector<Index> pointsIds = {};                      // Solution point indices (only for LEAF)
+  Index splitId = INVALID_INDEX;                          // Split hyperplane index (only for NODE)
+  std::vector<std::pair<Relation, Index>> children = {};  // Child node direction and indices
 };
 
 /**
@@ -130,6 +130,8 @@ public:
   /// Get construction parameters
   const TreeParams& params() const { return params_; }
 
+  const std::vector<Relation>& branchDirs() const { return branchDirs_; }
+
 private:
   std::vector<Node> nodes_;  // Tree nodes
   TreeParams params_;        // Construction parameters
@@ -139,6 +141,8 @@ private:
   Index size_ = 0;                // Total number of nodes
   Index width_ = 0;               // Maximum width
   Index depth_ = 0;               // Maximum depth
+
+  std::vector<Relation> branchDirs_;
 
   Clock::time_point startTime_;  // Build start time
   Clock::time_point checkTime_;  // Last logging time
