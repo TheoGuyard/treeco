@@ -151,7 +151,7 @@ TEST_F(TreeTest, LeafNodesHavePoints) {
     if (node.type == NodeType::LEAF) {
       EXPECT_FALSE(node.pointsIds.empty());
       EXPECT_EQ(node.splitId, INVALID_INDEX);
-      EXPECT_TRUE(node.childIds.empty());
+      EXPECT_TRUE(node.children.empty());
     }
   }
 }
@@ -166,7 +166,7 @@ TEST_F(TreeTest, InternalNodesHaveSplits) {
     if (node.type == NodeType::NODE) {
       EXPECT_TRUE(node.pointsIds.empty());
       EXPECT_NE(node.splitId, INVALID_INDEX);
-      EXPECT_FALSE(node.childIds.empty());
+      EXPECT_FALSE(node.children.empty());
     }
   }
 }

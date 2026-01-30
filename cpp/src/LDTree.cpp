@@ -62,6 +62,10 @@ std::vector<SimplexVector> LDTree::query(const std::vector<double>& cost, double
 
   Index nodeId = tree_.rootId();
 
+  const std::vector<Relation>& branchingDir = tree_.branchDirs();
+
+  bool hasEQ = std::find(branchingDir.begin(), branchingDir.end(), Relation::EQ) != branchingDir.end();
+
   while (tree_.node(nodeId).type == NodeType::NODE) {
     const Node& node = tree_.node(nodeId);
     const TernaryVector& split = voronoi_.split(node.splitId);
@@ -73,13 +77,19 @@ std::vector<SimplexVector> LDTree::query(const std::vector<double>& cost, double
     } else if (splitSide >= tolerance) {
       relation = Relation::GT;
     } else {
-      if (node.childIds.find(Relation::EQ) != node.childIds.end()) {
+      if (hasEQ) {
         relation = Relation::EQ;
       } else {
         relation = Relation::LT;
       }
     }
-    nodeId = node.childIds.at(relation);
+
+    for (const auto& [rel, childId] : node.children) {
+      if (rel == relation) {
+        nodeId = childId;
+        break;
+      }
+    }
   }
 
   std::vector<SimplexVector> points;
@@ -139,9 +149,9 @@ void LDTree::pprintNode(const Node& node, const std::string& prefix, const std::
     out << ")" << std::endl;
     std::string childPrefix = prefix + (label.empty() ? "" : (last ? "    " : "│   "));
     Index count = 0;
-    for (const auto& [relation, childId] : node.childIds) {
+    for (const auto& [relation, childId] : node.children) {
       const Node& child = tree_.node(childId);
-      bool last = (++count == node.childIds.size());
+      bool last = (++count == node.children.size());
       pprintNode(child, childPrefix, relationTypeToString(relation), last, tightDisplay, outputStream);
     }
   }
@@ -259,12 +269,24 @@ void LDTree::generateNodeCode(Index nodeId, std::ostringstream& out, int indent)
     out << pad << "return sol;\n";
     return;
   }
+
+  // Find out the branching direction index
+  Index childIdLT = INVALID_INDEX;
+  Index childIdGT = INVALID_INDEX;
+  for (const auto& [relation, childId] : node.children) {
+    if (relation == Relation::LT) {
+      childIdLT = childId;
+    } else if (relation == Relation::GT) {
+      childIdGT = childId;
+    }
+  }
+
   out << pad << "if (";
   generateDotCode(out, voronoi_.split(node.splitId));
   out << " <= 0.0) {\n";
-  generateNodeCode(node.childIds.at(Relation::LT), out, indent + 1);
+  generateNodeCode(childIdLT, out, indent + 1);
   out << pad << "} else {\n";
-  generateNodeCode(node.childIds.at(Relation::GT), out, indent + 1);
+  generateNodeCode(childIdGT, out, indent + 1);
   out << pad << "}\n";
 }
 

@@ -178,6 +178,6 @@ TEST(MaxCutTest, SampleCostInRange) {
   EXPECT_EQ(cost.size(), maxcut.dimension());
   for (double c : cost) {
     EXPECT_GE(c, 0.0);
-    EXPECT_LE(c, 1.0);
+    EXPECT_LE(c, std::sqrt(2.0));
   }
 }

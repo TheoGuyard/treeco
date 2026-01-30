@@ -9,6 +9,8 @@ void Tree::synthetize(const Dynprog& dynprog, const TreeParams& params) {
   startTime_ = Clock::now();
   checkTime_ = startTime_;
 
+  branchDirs_ = dynprog.branchDirections();
+
   logHeader();
 
   if (dynprog.status() == DynprogStatus::INVALID) {
@@ -16,6 +18,7 @@ void Tree::synthetize(const Dynprog& dynprog, const TreeParams& params) {
   }
 
   std::queue<std::pair<Index, Index>> queue;
+
   Index stateId = dynprog.rootId();
   const State& state = dynprog.state(stateId);
   Index nodeId =
@@ -27,10 +30,18 @@ void Tree::synthetize(const Dynprog& dynprog, const TreeParams& params) {
     const Node& node = nodes_.at(nodeId);
     if (node.type == NodeType::NODE) {
       const State& state = dynprog.state(stateId);
-      for (const auto& [relation, childStateId] : state.splits.at(state.splitId).childIds) {
+
+      auto splitIt = std::find_if(std::begin(state.splits), std::end(state.splits),
+                                  [splitId = state.splitId](const Split& split) { return split.id == splitId; });
+
+      for (Index i = 0; i < branchDirs_.size(); ++i) {
+        Relation childDir = branchDirs_[i];
+        Index childStateId = splitIt->childIds[i];
+
         const State& childState = dynprog.state(childStateId);
-        Index childNodeId = addNode(nodeId, relation, childState.isLeaf() ? childState.faceIds : std::vector<Index>{},
+        Index childNodeId = addNode(nodeId, childDir, childState.isLeaf() ? childState.faceIds : std::vector<Index>{},
                                     childState.isLeaf() ? INVALID_INDEX : childState.splitId);
+
         queue.emplace(childStateId, childNodeId);
       }
     }
@@ -78,7 +89,7 @@ Index Tree::addRoot(const std::vector<Index>& pointsIds, Index splitId) {
   return rootId_;
 }
 
-Index Tree::addNode(Index parentId, Relation relation, const std::vector<Index>& pointsIds, Index splitId) {
+Index Tree::addNode(Index parentId, Relation childDir, const std::vector<Index>& pointsIds, Index splitId) {
   if (parentId < 0 || parentId >= nodes_.size()) { throw std::out_of_range("Parent index out of range"); }
 
   if (pointsIds.size() > 0 && splitId != INVALID_INDEX) {
@@ -88,12 +99,14 @@ Index Tree::addNode(Index parentId, Relation relation, const std::vector<Index>&
   Node& parent = nodes_.at(parentId);
   NodeType nodeType = splitId == INVALID_INDEX ? NodeType::LEAF : NodeType::NODE;
 
-  if (parent.childIds.find(relation) != parent.childIds.end()) { throw std::runtime_error("Child already exists."); }
+  for (const auto& child : parent.children) {
+    if (child.first == childDir) { throw std::runtime_error("Parent already has a child with the same direction"); }
+  }
 
   Index nodeId = nodes_.size();
 
   Node node = Node{parent.depth + 1, nodeType, pointsIds, splitId};
-  parent.childIds[relation] = nodeId;
+  parent.children.push_back(std::make_pair(childDir, nodeId));
   nodes_.push_back(node);
 
   // Update tree attributes

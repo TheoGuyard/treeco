@@ -15,10 +15,6 @@ domain = problem.get_cost_domain()
 policy = LDTree(points, domain)
 policy.build(verbose=True)
 
-policy = LDTree(points)
-policy.build(verbose=True)
-
-
 # Print the tree structure
 print("\n\n")
 policy.pprint()
