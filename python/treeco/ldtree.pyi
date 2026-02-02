@@ -7,9 +7,6 @@ from treeco.voronoi import Voronoi
 from treeco.dynprog import (
     Exploration,
     Branching,
-    LowerBounding,
-    Positioning,
-    SplitSelection,
     SplitScoring,
 )
 from treeco.tree import Tree
@@ -77,11 +74,7 @@ class LDTree:
         filter_checks: bool = True,
         exploration: Exploration = Exploration.iterative,
         branching: Branching = Branching.binary,
-        lower_bounding: LowerBounding = LowerBounding.backtrack,
-        positioning: Positioning = Positioning.precompute,
-        split_selection: SplitSelection = SplitSelection.all,
         split_scoring: SplitScoring = SplitScoring.variance,
-        random_seed: int = 42,
     ) -> None:
         """
         Build the LDTree structure.
@@ -100,10 +93,7 @@ class LDTree:
             exploration: Search exploration strategy
             branching: Tree branching mode (binary or ternary)
             lower_bounding: Lower bound computation strategy
-            positioning: Face-split position computation mode
-            split_selection: Split candidate selection strategy
             split_scoring: Split quality scoring strategy
-            random_seed: Random seed for sampling-based selection
         """
         ...
 

@@ -28,42 +28,6 @@ class Branching(Enum):
     ternary: Branching
     binary: Branching
 
-class LowerBounding(Enum):
-    """
-    Lower bound computation strategy for subtree depth.
-
-    Attributes:
-        fixed: Fixed lower bound: ceil(log_c(|F|)) where c is child count
-        backtrack: Backtrack from children's bounds for tighter estimate
-    """
-
-    fixed: LowerBounding
-    backtrack: LowerBounding
-
-class Positioning(Enum):
-    """
-    Position computation mode for face-split relations.
-
-    Attributes:
-        online: Compute positions on-demand during search
-        precompute: Precompute all face-split positions upfront
-    """
-
-    online: Positioning
-    precompute: Positioning
-
-class SplitSelection(Enum):
-    """
-    Split selection strategy at each decision node.
-
-    Attributes:
-        all: Consider all valid splits at each node
-        sampling: Randomly sample k splits to score
-    """
-
-    all: SplitSelection
-    sampling: SplitSelection
-
 class SplitScoring(Enum):
     """
     Split scoring strategy for ordering candidate splits.

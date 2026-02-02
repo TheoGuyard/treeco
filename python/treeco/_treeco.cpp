@@ -233,21 +233,6 @@ void bind_module_dynprog(py::module_ &m) {
         .value("binary", Branching::BINARY)
         ;
 
-    py::enum_<LowerBounding>(m, "LowerBounding")
-        .value("fixed", LowerBounding::FIXED)
-        .value("backtrack", LowerBounding::BACKTRACK)
-        ;
-
-    py::enum_<Positioning>(m, "Positioning")
-        .value("online", Positioning::ONLINE)
-        .value("precompute", Positioning::PRECOMPUTE)
-        ;
-
-    py::enum_<SplitSelection>(m, "SplitSelection")
-        .value("all", SplitSelection::ALL)
-        .value("sampling", SplitSelection::SAMPLING)
-        ;
-
     py::enum_<SplitScoring>(m, "SplitScoring")
         .value("variance", SplitScoring::VARIANCE)
         .value("entropy", SplitScoring::ENTROPY)
@@ -433,11 +418,7 @@ void bind_module_ldtree(py::module_ &m) {
                 bool            filterChecks,
                 Exploration     exploration,
                 Branching       branching,
-                LowerBounding   lowerBounding,
-                Positioning     positioning,
-                SplitSelection  splitSelection,
-                SplitScoring    splitScoring,
-                Index           randomSeed
+                SplitScoring    splitScoring
             ) {
                 self.build(
                     verbose,
@@ -450,11 +431,7 @@ void bind_module_ldtree(py::module_ &m) {
                     filterChecks,
                     exploration,
                     branching,
-                    lowerBounding,
-                    positioning,
-                    splitSelection,
-                    splitScoring,
-                    randomSeed
+                    splitScoring
                 );
             },
             py::arg("verbose")          = false,
@@ -466,11 +443,7 @@ void bind_module_ldtree(py::module_ &m) {
             py::arg("filter_checks")    = true,
             py::arg("exploration")      = Exploration::ITERATIVE,
             py::arg("branching")        = Branching::BINARY,
-            py::arg("lower_bounding")   = LowerBounding::BACKTRACK,
-            py::arg("positioning")      = Positioning::ONLINE,
-            py::arg("split_selection")  = SplitSelection::ALL,
             py::arg("split_scoring")    = SplitScoring::VARIANCE,
-            py::arg("random_seed")      = 42,
             py::call_guard<py::gil_scoped_release>())
         .def("query", &LDTree::query,
             py::arg("cost"),

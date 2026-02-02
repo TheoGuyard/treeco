@@ -45,7 +45,9 @@ constexpr Index MAX_DEPTH = std::numeric_limits<Index>::max();
  * @param increment Value to add (default: 1)
  * @return Sum or MAX_DEPTH if overflow would occur
  */
-inline Index safeAdd(Index d, Index increment = 1) { return (d >= MAX_DEPTH - increment) ? MAX_DEPTH : d + increment; }
+inline Index safeAdd(Index d, Index increment = 1) {
+  return (d >= MAX_DEPTH - increment) ? MAX_DEPTH : d + increment;
+}
 
 /**
  * @brief Exploration strategy for the dynamic programming algorithm.
@@ -126,120 +128,6 @@ inline Branching stringToBranchingType(const std::string& str) {
   throw std::invalid_argument("Invalid branching type: " + str +
                               ". Available options are: "
                               "binary, ternary.");
-}
-
-/**
- * @brief Lower bound computation strategy for subtree depth.
- */
-enum class LowerBounding {
-  FIXED,     // Fixed lower bound: ceil(log_c(|F|)) where c is child count
-  BACKTRACK  // Backtrack from children's bounds for tighter estimate
-};
-
-/**
- * @brief Convert LowerBounding enum to string.
- * @param type The lower bounding type
- * @return String representation
- */
-inline std::string lowerBoundingTypeToString(LowerBounding type) {
-  switch (type) {
-    case LowerBounding::FIXED:
-      return "fixed";
-    case LowerBounding::BACKTRACK:
-      return "backtrack";
-    default:
-      return "unknown";
-  }
-}
-
-/**
- * @brief Parse string to LowerBounding enum.
- * @param str String representation
- * @return Corresponding LowerBounding value
- * @throws std::invalid_argument if string is invalid
- */
-inline LowerBounding stringToLowerBoundingType(const std::string& str) {
-  if (str == "fixed") return LowerBounding::FIXED;
-  if (str == "backtrack") return LowerBounding::BACKTRACK;
-  throw std::invalid_argument("Invalid lower bounding type: " + str +
-                              ". Available options are: "
-                              "fixed, backtrack.");
-}
-
-/**
- * @brief Position computation mode for face-split relations.
- */
-enum class Positioning {
-  ONLINE,     // Compute positions on-demand during search
-  PRECOMPUTE  // Precompute all face-split positions upfront
-};
-
-/**
- * @brief Convert Positioning enum to string.
- * @param type The positioning type
- * @return String representation
- */
-inline std::string positioningTypeToString(Positioning type) {
-  switch (type) {
-    case Positioning::ONLINE:
-      return "online";
-    case Positioning::PRECOMPUTE:
-      return "precompute";
-    default:
-      return "unknown";
-  }
-}
-
-/**
- * @brief Parse string to Positioning enum.
- * @param str String representation
- * @return Corresponding Positioning value
- * @throws std::invalid_argument if string is invalid
- */
-inline Positioning stringToPositioningType(const std::string& str) {
-  if (str == "online") return Positioning::ONLINE;
-  if (str == "precompute") return Positioning::PRECOMPUTE;
-  throw std::invalid_argument("Invalid positioning type: " + str +
-                              ". Available options are: "
-                              "online, precompute.");
-}
-
-/**
- * @brief Split selection strategy at each decision node.
- */
-enum class SplitSelection {
-  ALL,      // Consider all valid splits at each node
-  SAMPLING  // Randomly sample k splits to score
-};
-
-/**
- * @brief Convert SplitSelection enum to string.
- * @param type The split selection type
- * @return String representation
- */
-inline std::string splitSelectionTypeToString(SplitSelection type) {
-  switch (type) {
-    case SplitSelection::ALL:
-      return "all";
-    case SplitSelection::SAMPLING:
-      return "sampling";
-    default:
-      return "unknown";
-  }
-}
-
-/**
- * @brief Parse string to SplitSelection enum.
- * @param str String representation
- * @return Corresponding SplitSelection value
- * @throws std::invalid_argument if string is invalid
- */
-inline SplitSelection stringToSplitSelectionType(const std::string& str) {
-  if (str == "all") return SplitSelection::ALL;
-  if (str == "sampling") return SplitSelection::SAMPLING;
-  throw std::invalid_argument("Invalid split selection type: " + str +
-                              ". Available options are: "
-                              "all, sampling.");
 }
 
 /**
@@ -349,12 +237,13 @@ inline std::string dynprogStatusToString(DynprogStatus status) {
  * @brief Information about a candidate split at a state.
  */
 struct Split {
-  Index id = INVALID_INDEX;                                // Split index in Voronoi diagram
-  std::optional<bool> valid = std::nullopt;                // Whether the split is valid for this state
-  double score = std::numeric_limits<double>::infinity();  // Split quality score
-  std::array<Index, 3> childNumFaces = {};                 // Number of faces in each child
-  std::array<Index, 3> childIds = {};                      // Child state indices
-  bool isClosed = false;                                   // Whether the split is fully explored
+  Index id = INVALID_INDEX;  // Split index in Voronoi diagram
+  std::optional<bool> valid =
+      std::nullopt;  // Whether the split is valid for this state
+  double score =
+      std::numeric_limits<double>::infinity();  // Split quality score
+  std::array<Index, 3> childIds = {};           // Child state indices
+  bool isClosed = false;  // Whether the split is fully explored
 };
 
 /**
@@ -370,9 +259,8 @@ struct State {
   Index lbHeight = 0;               // Lower bound on optimal subtree height
   Index ubHeight = MAX_DEPTH;       // Upper bound on optimal subtree height
   Index splitId = INVALID_INDEX;    // Best split index found
-  Index numSplitsBuilt = 0;         // Number of splits fully explored
   bool isBuilt = false;             // Whether all splits have been explored
-  bool isClosed = false;            // Whether state is closed (leaf, pruned, or optimal)
+  bool isClosed = false;  // Whether state is closed (leaf, pruned, or optimal)
 
   /// Get the depth of this state in the tree
   Index depth() const { return static_cast<Index>(region.numCuts()); }
@@ -389,20 +277,17 @@ struct State {
  * @brief Parameters for the dynamic programming algorithm.
  */
 struct DynprogParams {
-  bool verbose = false;                                        // Enable verbose logging
-  std::ostream* outputStream = &std::cout;                     // Output stream for logs
-  double logInterval = 5.0;                                    // Logging interval in seconds
-  bool logSave = false;                                        // Save logs at each iteration
-  double timeLimit = std::numeric_limits<double>::infinity();  // Time limit in seconds
-  double tolerance = 1e-8;                                     // Numerical tolerance
-  bool filterChecks = true;                                    // Use filtering for fast validity checks
-  Exploration exploration = Exploration::ITERATIVE;            // Exploration strategy
-  Branching branching = Branching::BINARY;                     // Branching mode
-  LowerBounding lowerBounding = LowerBounding::BACKTRACK;      // Lower bounding strategy
-  Positioning positioning = Positioning::ONLINE;               // Position computation mode
-  SplitSelection splitSelection = SplitSelection::ALL;         // Split selection strategy
-  SplitScoring splitScoring = SplitScoring::MINMAX;            // Split scoring strategy
-  Index randomSeed = 42;                                       // Random seed for sampling
+  bool verbose = false;                     // Enable verbose logging
+  std::ostream* outputStream = &std::cout;  // Output stream for logs
+  double logInterval = 5.0;                 // Logging interval in seconds
+  bool logSave = false;                     // Save logs at each iteration
+  double timeLimit =
+      std::numeric_limits<double>::infinity();  // Time limit in seconds
+  double tolerance = 1e-8;                      // Numerical tolerance
+  bool filterChecks = true;  // Use filtering for fast validity checks
+  Exploration exploration = Exploration::ITERATIVE;  // Exploration strategy
+  Branching branching = Branching::BINARY;           // Branching mode
+  SplitScoring splitScoring = SplitScoring::MINMAX;  // Split scoring strategy
 };
 
 /**
@@ -446,7 +331,9 @@ public:
   /// Get the root state index
   Index rootId() const { return rootId_; }
 
-  const std::vector<Relation>& branchDirections() const { return branchDirections_; }
+  const std::vector<Relation>& branchDirections() const {
+    return branchDirections_;
+  }
 
 private:
   const Voronoi& voronoi_;  // Voronoi diagram reference
@@ -455,34 +342,40 @@ private:
   DynprogStats stats_;      // Algorithm statistics
   DynprogLogs logs_ = {};   // Progress logs
 
-  DynprogStatus status_ = DynprogStatus::INVALID;                     // Termination status
-  std::vector<State> states_ = {};                                    // All created states
-  std::unordered_map<Cone, Index, ConeHasher> regionToStateId_ = {};  // State lookup by region
-  Index rootId_ = INVALID_INDEX;                                      // Root state index
-  std::unique_ptr<Feasibility> feasibility_ = nullptr;                // Feasibility checker
-  std::vector<Relation> branchDirections_ = {};                       // Cached branching directions
-  std::vector<std::vector<Relation>> positions_;                      // Face/split position cache (LT/EQ/GT/RF)
-  bool domainContainsOrigin_;                                         // Whether cost domain includes origin
-  std::mt19937 rng_;                                                  // Random generator for sampling
-  Clock::time_point startTime_;                                       // Algorithm start time
-  Clock::time_point checkTime_;                                       // Last logging time
+  DynprogStatus status_ = DynprogStatus::INVALID;  // Termination status
+  std::vector<State> states_ = {};                 // All created states
+  std::unordered_map<Cone, Index, ConeHasher> regionToStateId_ =
+      {};                         // State lookup by region
+  Index rootId_ = INVALID_INDEX;  // Root state index
+  std::unique_ptr<Feasibility> feasibility_ = nullptr;  // Feasibility checker
+  std::vector<Relation> branchDirections_ = {};  // Cached branching directions
+  std::vector<std::vector<Relation>>
+      positions_;                // Face/split position cache (LT/EQ/GT/RF)
+  bool domainContainsOrigin_;    // Whether cost domain includes origin
+  std::mt19937 rng_;             // Random generator for split scoring
+  Clock::time_point startTime_;  // Algorithm start time
+  Clock::time_point checkTime_;  // Last logging time
 
   void initRootState();
   void initPositions();
 
   State createState(State& state, Split& split, Relation cutDir);
-  void buildState(Index stateId, Index kSplits);
+  void buildState(Index stateId);
   void evaluateState(Index stateId, Index kSplits);
   void evaluateLowerBound(State& state);
-  void evaluateScore(State& state, Split& split);
-  void evaluateValidity(State& state, Split& split, bool externalStateCuts = false);
-  bool checkChildFace(State& state, Split& split, Relation cutDir, Index faceId, bool externalChildCuts = false);
+  void evaluateScore(State& state, Split& split,
+                     const std::vector<Index>& childFaceCounts);
+  void evaluateValidity(State& state, Split& split,
+                        bool externalStateCuts = false);
+  bool checkChildFace(State& state, Split& split, Relation cutDir, Index faceId,
+                      bool externalChildCuts = false);
   void updateStatus();
 
-  Relation getPosition(Index faceId, Index splitId, bool externalInteriorFaceCuts = false);
   std::optional<bool> inferValidity(State& state, Split& split);
-  std::optional<bool> inferChildFace(State& state, Split& split, Relation cutDir, Index faceId);
-  bool childContainsFaceCenter(State& state, Split& split, Relation cutDir, Index faceId);
+  std::optional<bool> inferChildFace(State& state, Split& split,
+                                     Relation cutDir, Index faceId);
+  bool childContainsFaceCenter(State& state, Split& split, Relation cutDir,
+                               Index faceId);
 
   std::vector<Index> getIterationRange() const;
   bool checkTimeLimit() const;

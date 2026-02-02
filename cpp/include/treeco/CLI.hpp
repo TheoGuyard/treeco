@@ -27,22 +27,18 @@ struct Args {
   std::string domainFile = "";   // Path to domain file (optional)
   std::string queriesFile = "";  // Path to queries file (optional)
 
-  bool verbose = true;                                         // Enable verbose output
-  double logInterval = 5.0;                                    // Logging interval in seconds
-  bool logSave = true;                                         // Save logs at each iteration
+  bool verbose = true;       // Enable verbose output
+  double logInterval = 5.0;  // Logging interval in seconds
+  bool logSave = true;       // Save logs at each iteration
   double timeLimit = std::numeric_limits<double>::infinity();  // Time limit
-  double tolerance = 1e-8;                                     // Numerical tolerance
+  double tolerance = 1e-8;  // Numerical tolerance
 
   bool deduplicate = true;  // Remove duplicate points
 
-  bool filterChecks = true;                                // Use filtering for validity checks
-  Exploration exploration = Exploration::ITERATIVE;        // Exploration strategy
-  Branching branching = Branching::BINARY;                 // Branching mode
-  LowerBounding lowerBounding = LowerBounding::BACKTRACK;  // Lower bounding strategy
-  Positioning positioning = Positioning::ONLINE;           // Position computation mode
-  SplitSelection splitSelection = SplitSelection::ALL;     // Split selection strategy
-  Index randomSeed = 42;                                   // Random seed for sampling
-  SplitScoring splitScoring = SplitScoring::MINMAX;        // Split scoring strategy
+  bool filterChecks = true;  // Use filtering for validity checks
+  Exploration exploration = Exploration::ITERATIVE;  // Exploration strategy
+  Branching branching = Branching::BINARY;           // Branching mode
+  SplitScoring splitScoring = SplitScoring::MINMAX;  // Split scoring strategy
 
   bool showHelp = false;  // Display help message
 };

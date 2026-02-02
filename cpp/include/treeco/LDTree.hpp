@@ -69,17 +69,24 @@ public:
    * @param points Vector of feasible binary solutions
    * @param domain Optional linear constraints on the cost domain
    */
-  LDTree(const std::vector<BinaryVector>& points, const Domain& domain = Domain());
+  LDTree(const std::vector<BinaryVector>& points,
+         const Domain& domain = Domain());
 
   /// Serialization constructor
-  LDTree(const Domain& domain, const LDTreeStats& stats, const std::vector<SimplexVector>& voronoiPoints,
-         const std::vector<TernaryVector>& voronoiSplits, const std::vector<Face>& voronoiFaces,
-         const std::vector<Edge>& voronoiEdges, const VoronoiParams& voronoiParams, const VoronoiStats& voronoiStats,
-         const std::vector<Node>& treeNodes, const TreeParams& treeParams, const TreeStats& treeStats, Index treeRootId,
-         Index treeSize, Index treeWidth, Index treeDepth)
+  LDTree(const Domain& domain, const LDTreeStats& stats,
+         const std::vector<SimplexVector>& voronoiPoints,
+         const std::vector<TernaryVector>& voronoiSplits,
+         const std::vector<Face>& voronoiFaces,
+         const std::vector<Edge>& voronoiEdges,
+         const VoronoiParams& voronoiParams, const VoronoiStats& voronoiStats,
+         const std::vector<Node>& treeNodes, const TreeParams& treeParams,
+         const TreeStats& treeStats, Index treeRootId, Index treeSize,
+         Index treeWidth, Index treeDepth)
     : domain_(domain)
-    , voronoi_(voronoiPoints, voronoiSplits, voronoiFaces, voronoiEdges, voronoiParams, voronoiStats)
-    , tree_(treeNodes, treeParams, treeStats, treeRootId, treeSize, treeWidth, treeDepth)
+    , voronoi_(voronoiPoints, voronoiSplits, voronoiFaces, voronoiEdges,
+               voronoiParams, voronoiStats)
+    , tree_(treeNodes, treeParams, treeStats, treeRootId, treeSize, treeWidth,
+            treeDepth)
     , stats_(stats) {}
 
   /**
@@ -98,18 +105,16 @@ public:
    * @param filterChecks Use filtering for faster split validity checks
    * @param exploration Search exploration strategy
    * @param branching Tree branching mode (binary or ternary)
-   * @param lowerBounding Lower bound computation strategy
-   * @param positioning Face-split position computation mode
-   * @param splitSelection Split candidate selection strategy
    * @param splitScoring Split quality scoring strategy
-   * @param randomSeed Random seed for sampling-based selection
    */
-  void build(bool verbose = false, std::ostream* outputStream = &std::cout, double logInterval = 5.0,
-             bool logSave = true, double timeLimit = std::numeric_limits<double>::infinity(), double tolerance = 1e-8,
-             bool deduplicate = true, bool filterChecks = true, Exploration exploration = Exploration::ITERATIVE,
-             Branching branching = Branching::BINARY, LowerBounding lowerBounding = LowerBounding::BACKTRACK,
-             Positioning positioning = Positioning::ONLINE, SplitSelection splitSelection = SplitSelection::ALL,
-             SplitScoring splitScoring = SplitScoring::VARIANCE, Index randomSeed = 42);
+  void build(bool verbose = false, std::ostream* outputStream = &std::cout,
+             double logInterval = 5.0, bool logSave = true,
+             double timeLimit = std::numeric_limits<double>::infinity(),
+             double tolerance = 1e-8, bool deduplicate = true,
+             bool filterChecks = true,
+             Exploration exploration = Exploration::ITERATIVE,
+             Branching branching = Branching::BINARY,
+             SplitScoring splitScoring = SplitScoring::VARIANCE);
 
   /**
    * @brief Query the tree for optimal solutions.
@@ -118,14 +123,17 @@ public:
    * @param checkDomain Validate that cost is within the domain before querying
    * @return Vector of optimal binary solutions
    */
-  std::vector<BinaryVector> query(const RealVector& cost, double tolerance = 1e-8, bool checkDomain = false) const;
+  std::vector<BinaryVector> query(const RealVector& cost,
+                                  double tolerance = 1e-8,
+                                  bool checkDomain = false) const;
 
   /**
    * @brief Pretty-print the tree structure.
    * @param tightDisplay If true, show only indices; otherwise show full vectors
    * @param outputStream Output stream for printing
    */
-  void pprint(bool tightDisplay = false, std::ostream* outputStream = &std::cout) const;
+  void pprint(bool tightDisplay = false,
+              std::ostream* outputStream = &std::cout) const;
 
   /**
    * @brief Generate standalone C code implementing the decision tree.
@@ -133,7 +141,8 @@ public:
    * @param doc Documentation header for the generated code
    * @param benchmarkMode Generate benchmarking code instead of query code
    */
-  void flatten(const std::string filepath, const std::string doc = "", bool benchmarkMode = false) const;
+  void flatten(const std::string filepath, const std::string doc = "",
+               bool benchmarkMode = false) const;
 
   /// Get the cost domain constraints
   const Domain& domain() const noexcept { return domain_; }
@@ -154,14 +163,19 @@ private:
   LDTreeStats stats_;  // Build statistics
 
   // LDTree::pprint helpers
-  void pprintNode(const Node& node, const std::string& prefix, const std::string& label, bool last, bool tightDisplay,
+  void pprintNode(const Node& node, const std::string& prefix,
+                  const std::string& label, bool last, bool tightDisplay,
                   std::ostream* outputStream) const;
 
   // LDTree::flatten helpers
-  void generateNormalCode(std::ostringstream& out, const std::string& doc) const;
-  void generateBenchmarkCode(std::ostringstream& out, const std::string& doc) const;
-  void generateNodeCode(Index nodeIndex, std::ostringstream& out, int indent = 1) const;
-  void generateDotCode(std::ostringstream& out, const TernaryVector& split) const;
+  void generateNormalCode(std::ostringstream& out,
+                          const std::string& doc) const;
+  void generateBenchmarkCode(std::ostringstream& out,
+                             const std::string& doc) const;
+  void generateNodeCode(Index nodeIndex, std::ostringstream& out,
+                        int indent = 1) const;
+  void generateDotCode(std::ostringstream& out,
+                       const TernaryVector& split) const;
 };
 
 /// Stream output operator for LDTree

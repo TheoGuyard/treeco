@@ -10,7 +10,8 @@ Cut::Cut(Index hid, Relation dir) : hid(hid), dir(dir) {}
 
 size_t Cut::hash() const {
   std::size_t h = std::hash<Index>{}(hid);
-  h ^= std::hash<int>{}(static_cast<int>(dir)) + 0x9e3779b9 + (h << 6) + (h >> 2);
+  h ^= std::hash<int>{}(static_cast<int>(dir)) + 0x9e3779b9 + (h << 6) +
+       (h >> 2);
   return h;
 }
 
@@ -20,11 +21,17 @@ std::string Cut::toString() const {
   return oss.str();
 }
 
-bool Cut::operator==(const Cut& other) const { return hid == other.hid && dir == other.dir; }
+bool Cut::operator==(const Cut& other) const {
+  return hid == other.hid && dir == other.dir;
+}
 
-bool Cut::operator!=(const Cut& other) const { return hid != other.hid || dir != other.dir; }
+bool Cut::operator!=(const Cut& other) const {
+  return hid != other.hid || dir != other.dir;
+}
 
-bool Cut::operator<(const Cut& other) const { return (hid < other.hid) || (hid == other.hid && dir < other.dir); }
+bool Cut::operator<(const Cut& other) const {
+  return (hid < other.hid) || (hid == other.hid && dir < other.dir);
+}
 
 // ----------------------------------------------------------------------------
 // Cone implementation
@@ -42,8 +49,14 @@ Cone::Cone(const std::vector<Cut>& cuts) {
 
 void Cone::addCut(const Cut& cut) {
   cuts_.insert(cut);
-  if (cut.dir == Relation::LE || cut.dir == Relation::GE || cut.dir == Relation::EQ) { isOpen_ = false; }
-  if (cut.dir == Relation::LT || cut.dir == Relation::GT || cut.dir == Relation::RF) { containsOrigin_ = false; }
+  if (cut.dir == Relation::LE || cut.dir == Relation::GE ||
+      cut.dir == Relation::EQ) {
+    isOpen_ = false;
+  }
+  if (cut.dir == Relation::LT || cut.dir == Relation::GT ||
+      cut.dir == Relation::RF) {
+    containsOrigin_ = false;
+  }
 }
 
 void Cone::addCut(Index hid, Relation dir) { addCut(Cut(hid, dir)); }
@@ -99,7 +112,9 @@ Cone Cone::interior() const {
 std::size_t Cone::hash() const {
   // Combine hashes of all halfspaces
   std::size_t h = 0;
-  for (const auto& cut : cuts_) { h ^= cut.hash() + 0x9e3779b9 + (h << 6) + (h >> 2); }
+  for (const auto& cut : cuts_) {
+    h ^= cut.hash() + 0x9e3779b9 + (h << 6) + (h >> 2);
+  }
   return h;
 }
 
@@ -138,13 +153,17 @@ int dot(const TernaryVector& p, const SimplexVector& v) {
 
 double dot(const TernaryVector& p, const RealVector& v) {
   double result = 0;
-  for (Index i = 0; i < p.size(); ++i) { result += static_cast<double>(p[i]) * v[i]; }
+  for (Index i = 0; i < p.size(); ++i) {
+    result += static_cast<double>(p[i]) * v[i];
+  }
   return result;
 }
 
 double dot(const RealVector& p, const BinaryVector& v) {
   double result = 0.0;
-  for (Index i = 0; i < p.size(); ++i) { result += p[i] * static_cast<double>(v[i]); }
+  for (Index i = 0; i < p.size(); ++i) {
+    result += p[i] * static_cast<double>(v[i]);
+  }
   return result;
 }
 
@@ -181,7 +200,8 @@ std::vector<SimplexVector> scaleBinarySet(const std::vector<BinaryVector>& X) {
   return result;
 }
 
-std::vector<BinaryVector> unscaleBinarySet(const std::vector<SimplexVector>& X) {
+std::vector<BinaryVector> unscaleBinarySet(
+    const std::vector<SimplexVector>& X) {
   std::vector<BinaryVector> result;
   result.reserve(X.size());
   for (const auto& x : X) { result.push_back(unscaleBinary(x)); }
