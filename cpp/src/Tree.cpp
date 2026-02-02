@@ -21,8 +21,8 @@ void Tree::synthetize(const Dynprog& dynprog, const TreeParams& params) {
 
   Index stateId = dynprog.rootId();
   const State& state = dynprog.state(stateId);
-  Index nodeId =
-      addRoot(state.isLeaf() ? state.faceIds : std::vector<Index>{}, state.isLeaf() ? INVALID_INDEX : state.splitId);
+  Index nodeId = addRoot(state.isLeaf() ? state.faceIds : std::vector<Index>{},
+                         state.isLeaf() ? INVALID_INDEX : state.splitId);
   queue.emplace(stateId, nodeId);
 
   for (; !queue.empty(); queue.pop()) {
@@ -31,16 +31,21 @@ void Tree::synthetize(const Dynprog& dynprog, const TreeParams& params) {
     if (node.type == NodeType::NODE) {
       const State& state = dynprog.state(stateId);
 
-      auto splitIt = std::find_if(std::begin(state.splits), std::end(state.splits),
-                                  [splitId = state.splitId](const Split& split) { return split.id == splitId; });
+      auto splitIt =
+          std::find_if(std::begin(state.splits), std::end(state.splits),
+                       [splitId = state.splitId](const Split& split) {
+                         return split.id == splitId;
+                       });
 
       for (Index i = 0; i < branchDirs_.size(); ++i) {
         Relation childDir = branchDirs_[i];
         Index childStateId = splitIt->childIds[i];
 
         const State& childState = dynprog.state(childStateId);
-        Index childNodeId = addNode(nodeId, childDir, childState.isLeaf() ? childState.faceIds : std::vector<Index>{},
-                                    childState.isLeaf() ? INVALID_INDEX : childState.splitId);
+        Index childNodeId = addNode(
+            nodeId, childDir,
+            childState.isLeaf() ? childState.faceIds : std::vector<Index>{},
+            childState.isLeaf() ? INVALID_INDEX : childState.splitId);
 
         queue.emplace(childStateId, childNodeId);
       }
@@ -69,13 +74,16 @@ void Tree::synthetize(const Dynprog& dynprog, const TreeParams& params) {
 Index Tree::addRoot(const std::vector<Index>& pointsIds, Index splitId) {
   if (nodes_.size() > 0) { throw std::runtime_error("Tree is not empty"); }
 
-  if (rootId_ != INVALID_INDEX) { throw std::runtime_error("Root already set"); }
+  if (rootId_ != INVALID_INDEX) {
+    throw std::runtime_error("Root already set");
+  }
 
   if (pointsIds.size() > 0 && splitId != INVALID_INDEX) {
     throw std::runtime_error("Cannot add root with both points and split");
   }
 
-  NodeType rootType = splitId == INVALID_INDEX ? NodeType::LEAF : NodeType::NODE;
+  NodeType rootType =
+      splitId == INVALID_INDEX ? NodeType::LEAF : NodeType::NODE;
 
   Node root = Node{0, rootType, pointsIds, splitId};
   rootId_ = nodes_.size();
@@ -89,18 +97,25 @@ Index Tree::addRoot(const std::vector<Index>& pointsIds, Index splitId) {
   return rootId_;
 }
 
-Index Tree::addNode(Index parentId, Relation childDir, const std::vector<Index>& pointsIds, Index splitId) {
-  if (parentId < 0 || parentId >= nodes_.size()) { throw std::out_of_range("Parent index out of range"); }
+Index Tree::addNode(Index parentId, Relation childDir,
+                    const std::vector<Index>& pointsIds, Index splitId) {
+  if (parentId < 0 || parentId >= nodes_.size()) {
+    throw std::out_of_range("Parent index out of range");
+  }
 
   if (pointsIds.size() > 0 && splitId != INVALID_INDEX) {
     throw std::runtime_error("Cannot add node with both points and split");
   }
 
   Node& parent = nodes_.at(parentId);
-  NodeType nodeType = splitId == INVALID_INDEX ? NodeType::LEAF : NodeType::NODE;
+  NodeType nodeType =
+      splitId == INVALID_INDEX ? NodeType::LEAF : NodeType::NODE;
 
   for (const auto& child : parent.children) {
-    if (child.first == childDir) { throw std::runtime_error("Parent already has a child with the same direction"); }
+    if (child.first == childDir) {
+      throw std::runtime_error(
+          "Parent already has a child with the same direction");
+    }
   }
 
   Index nodeId = nodes_.size();
@@ -141,13 +156,16 @@ void Tree::logHeader() const {
 
 void Tree::logProgress(const std::string& message) {
   if (!params_.verbose) { return; }
-  if (elapsedTime(checkTime_) < params_.logInterval && message.empty()) { return; }
+  if (elapsedTime(checkTime_) < params_.logInterval && message.empty()) {
+    return;
+  }
 
   checkTime_ = Clock::now();
 
   std::ostream& out = *(params_.outputStream);
   out << "  ";
-  out << std::setw(12) << std::fixed << std::setprecision(2) << elapsedTime(startTime_);
+  out << std::setw(12) << std::fixed << std::setprecision(2)
+      << elapsedTime(startTime_);
   out << std::setw(12) << size_;
   out << std::setw(12) << width_;
   out << std::setw(12) << depth_;
@@ -159,7 +177,8 @@ void Tree::logFooter() const {
   if (!params_.verbose) return;
   std::ostream& out = *(params_.outputStream);
   out << std::string("  ") + std::string(4 * 12, '-') << "\n";
-  out << "  time: " << std::fixed << std::setprecision(4) << stats_.buildTime << "\n";
+  out << "  time: " << std::fixed << std::setprecision(4) << stats_.buildTime
+      << "\n";
 }
 
 std::ostream& operator<<(std::ostream& oss, const Tree& tree) {

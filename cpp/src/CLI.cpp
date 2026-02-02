@@ -34,16 +34,8 @@ Args parseArgs(int argc, char* argv[]) {
       args.exploration = stringToExplorationType(argv[++i]);
     } else if (arg == "--branching" && i + 1 < argc) {
       args.branching = stringToBranchingType(argv[++i]);
-    } else if (arg == "--lower-bounding" && i + 1 < argc) {
-      args.lowerBounding = stringToLowerBoundingType(argv[++i]);
-    } else if (arg == "--positioning" && i + 1 < argc) {
-      args.positioning = stringToPositioningType(argv[++i]);
-    } else if (arg == "--split-selection" && i + 1 < argc) {
-      args.splitSelection = stringToSplitSelectionType(argv[++i]);
     } else if (arg == "--split-scoring" && i + 1 < argc) {
       args.splitScoring = stringToSplitScoringType(argv[++i]);
-    } else if (arg == "--random-seed" && i + 1 < argc) {
-      args.randomSeed = std::stoull(argv[++i]);
     } else {
       std::cerr << "Unknown argument: " << arg << "\n";
       std::cerr << "Use --help for usage information.\n";
@@ -72,7 +64,8 @@ void printUsage(const char* progName, std::ostream* outputStream) {
   out << "General parameters:\n";
   out << "  --verbose             Enable verbose output\n";
   out << "  --log-interval <sec>  Log interval in seconds (default: 5.0)\n";
-  out << "  --log-save            Save logs at each iteration (default: true)\n";
+  out << "  --log-save            Save logs at each iteration (default: "
+         "true)\n";
   out << "  --time-limit <sec>    Time limit in seconds (default: infinity)\n";
   out << "  --tolerance <value>   Tolerance for zero (default: 1e-8)\n";
   out << "\n";
@@ -87,13 +80,8 @@ void printUsage(const char* progName, std::ostream* outputStream) {
          "binary)\n";
   out << "  --lower-bounding <mode>   Lower bounding: fixed, backtrack "
          "(default: backtrack)\n";
-  out << "  --positioning <mode>      Positioning: online, precompute "
-         "(default: online)\n";
-  out << "  --split-selection <mode>  Split selection: all, sampling (default: "
-         "all)\n";
   out << "  --split-scoring <mode>    Split scoring: variance, entropy, "
          "minmax, balance, none, random (default: variance)\n";
-  out << "  --random-seed <value>     Random seed for sampling (default: 42)\n";
   out << "\n";
   out << "Other:\n";
   out << "  --help                Show this help message\n";

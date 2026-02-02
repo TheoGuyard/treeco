@@ -55,7 +55,8 @@ public:
    * @param fixedConstraints Fixed constraints included permanently
    * @param tolerance Numerical tolerance for strict inequality margins
    */
-  Feasibility(const std::vector<TernaryVector>& pool, const Domain& fixedConstraints = Domain(),
+  Feasibility(const std::vector<TernaryVector>& pool,
+              const Domain& fixedConstraints = Domain(),
               double tolerance = 1e-8);
 
   /// Destructor
@@ -95,8 +96,8 @@ public:
   Index numSolve() const { return numSolve_; }
 
 private:
-  const std::vector<TernaryVector>& pool_;                 // Reference to the vector pool
-  double tolerance_;                                       // Numerical tolerance
+  const std::vector<TernaryVector>& pool_;  // Reference to the vector pool
+  double tolerance_;                        // Numerical tolerance
   FeasibilityStatus status_ = FeasibilityStatus::UNKNOWN;  // Current status
   Index numSolve_ = 0;                                     // LP solve counter
 
@@ -107,9 +108,11 @@ private:
   std::vector<GRBLinExpr> linexprs_;  // Linear expressions for pool vectors
   std::vector<GRBVar> varsFixed_;     // Fixed constraint variables
 
-  std::unordered_map<Index, GRBConstr> indexToCstr_;                  // Mapping from pool index to constraint
-  std::vector<std::unordered_map<Relation, Index>> relationsCounts_;  // Relation counts per pool index
-  std::vector<Relation> relationsReduce_;                             // Reduced relations per pool index
+  std::unordered_map<Index, GRBConstr>
+      indexToCstr_;  // Mapping from pool index to constraint
+  std::vector<std::unordered_map<Relation, Index>>
+      relationsCounts_;                    // Relation counts per pool index
+  std::vector<Relation> relationsReduce_;  // Reduced relations per pool index
 
   void build(const Domain& fixedConstraints);
   bool reduce(Index i);

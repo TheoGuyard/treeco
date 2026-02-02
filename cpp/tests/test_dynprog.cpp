@@ -135,54 +135,6 @@ TEST_F(DynprogTest, DifferentScoringStrategies) {
   }
 }
 
-TEST_F(DynprogTest, DifferentLowerBoundStrategies) {
-  Voronoi voronoi(smallPoints);
-  voronoi.build();
-
-  // FIXED strategy
-  Dynprog dp1(voronoi);
-  DynprogParams params1;
-  params1.verbose = false;
-  params1.lowerBounding = LowerBounding::FIXED;
-  dp1.run(params1);
-  Index depth1 = dp1.stats().optimalDepth;
-
-  // BACKTRACK strategy
-  Dynprog dp2(voronoi);
-  DynprogParams params2;
-  params2.verbose = false;
-  params2.lowerBounding = LowerBounding::BACKTRACK;
-  dp2.run(params2);
-  Index depth2 = dp2.stats().optimalDepth;
-
-  // Both should find the same optimal depth
-  EXPECT_EQ(depth1, depth2);
-}
-
-TEST_F(DynprogTest, PrecomputeVsOnFly) {
-  Voronoi voronoi(smallPoints);
-  voronoi.build();
-
-  // On-the-fly
-  Dynprog dp1(voronoi);
-  DynprogParams params1;
-  params1.verbose = false;
-  params1.positioning = Positioning::ONLINE;
-  dp1.run(params1);
-  Index depth1 = dp1.stats().optimalDepth;
-
-  // Precompute
-  Dynprog dp2(voronoi);
-  DynprogParams params2;
-  params2.verbose = false;
-  params2.positioning = Positioning::PRECOMPUTE;
-  dp2.run(params2);
-  Index depth2 = dp2.stats().optimalDepth;
-
-  // Both should find the same optimal depth
-  EXPECT_EQ(depth1, depth2);
-}
-
 TEST_F(DynprogTest, WithInputConstraints) {
   Voronoi voronoi(smallPoints);
   voronoi.build();
@@ -287,23 +239,6 @@ TEST_F(DynprogTest, GreedyExploration) {
   Index depth = dp.stats().optimalDepth;
 
   // Greedy may not find optimal, but should find something valid
-  EXPECT_LT(depth, MAX_DEPTH);
-}
-
-TEST_F(DynprogTest, SplitSelectionSampling) {
-  Voronoi voronoi(smallPoints);
-  voronoi.build();
-
-  Dynprog dp(voronoi);
-  DynprogParams params;
-  params.verbose = false;
-  params.splitSelection = SplitSelection::SAMPLING;
-  params.randomSeed = 42;
-
-  dp.run(params);
-  Index depth = dp.stats().optimalDepth;
-
-  // Should find a valid depth
   EXPECT_LT(depth, MAX_DEPTH);
 }
 

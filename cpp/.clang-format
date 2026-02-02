@@ -13,14 +13,14 @@ AlignTrailingComments: 			        true
 
 SortIncludes: true
 
-AllowAllParametersOfDeclarationOnNextLine: 	false
+AllowAllParametersOfDeclarationOnNextLine: 	true
 AllowShortBlocksOnASingleLine: 			        true
 AllowShortIfStatementsOnASingleLine: 		    true
 AllowShortLoopsOnASingleLine: 			        true
 AllowShortFunctionsOnASingleLine: 		      All
 AlwaysBreakBeforeMultilineStrings: 		      false
 
-ColumnLimit:                                120
+ColumnLimit:                                80
 
 BreakConstructorInitializers: 			            BeforeComma
 ConstructorInitializerAllOnOneLineOrOnePerLine: true

@@ -5,18 +5,26 @@ namespace treeco {
 Knapsack::Knapsack(Index numItems) : numItems_(numItems) {
   dimension_ = numItems_;
   weights_.resize(numItems_);
-  for (Index i = 0; i < numItems_; ++i) { weights_[i] = static_cast<double>(i + 1); }
+  for (Index i = 0; i < numItems_; ++i) {
+    weights_[i] = static_cast<double>(i + 1);
+  }
   capacity_ = static_cast<double>(numItems_);
 }
 
 Knapsack::Knapsack(const RealVector& weights, double capacity)
   : numItems_(weights.size()), weights_(weights), capacity_(capacity) {
   dimension_ = numItems_;
-  if (weights_.size() != numItems_) { throw std::invalid_argument("Weights size must match number of items."); }
-  for (const auto& w : weights_) {
-    if (w <= 0.0) { throw std::invalid_argument("All weights must be positive."); }
+  if (weights_.size() != numItems_) {
+    throw std::invalid_argument("Weights size must match number of items.");
   }
-  if (capacity_ <= 0.0) { throw std::invalid_argument("Capacity must be positive."); }
+  for (const auto& w : weights_) {
+    if (w <= 0.0) {
+      throw std::invalid_argument("All weights must be positive.");
+    }
+  }
+  if (capacity_ <= 0.0) {
+    throw std::invalid_argument("Capacity must be positive.");
+  }
 }
 
 Domain Knapsack::getCostDomain() const { return positiveOrthant(dimension_); }
