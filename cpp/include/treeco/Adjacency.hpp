@@ -6,10 +6,10 @@
 #ifndef TREECO_ADJACENCY_HPP
 #define TREECO_ADJACENCY_HPP
 
+#include <gurobi_c++.h>
+
 #include <stdexcept>
 #include <vector>
-
-#include <gurobi_c++.h>
 
 #include "treeco/Gurobi.hpp"
 #include "treeco/Types.hpp"
@@ -17,7 +17,7 @@
 namespace treeco {
 
 /**
- * @brief Checker for adjacency between vertices of the convex hull formed by 
+ * @brief Checker for adjacency between vertices of the convex hull formed by
  * a pool of points in {-1,+1}^n.
  *
  * @note Two vertices p_i and p_j of the pool are adjacent iff the system
@@ -35,7 +35,6 @@ namespace treeco {
  */
 class Adjacency {
 public:
-  
   explicit Adjacency(const std::vector<SimplexVector>& pool);
 
   ~Adjacency() = default;

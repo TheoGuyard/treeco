@@ -11,8 +11,9 @@ LDTree::LDTree(const std::vector<BinaryVector>& points, const Domain& domain)
 
 void LDTree::build(bool verbose, std::ostream* outputStream, double logInterval,
                    bool logSave, double timeLimit, double tolerance,
-                   bool deduplicate, bool filterChecks, Exploration exploration,
-                   Branching branching, SplitScoring splitScoring) {
+                   bool deduplicate, bool useSlacks, bool filterChecks,
+                   Exploration exploration, Branching branching,
+                   SplitScoring splitScoring) {
   auto startTime = Clock::now();
 
   if (verbose) { *outputStream << "Building LDTree...\n"; }
@@ -31,6 +32,7 @@ void LDTree::build(bool verbose, std::ostream* outputStream, double logInterval,
                     logSave,
                     timeLimit - elapsedTime(startTime),
                     tolerance,
+                    useSlacks,
                     filterChecks,
                     exploration,
                     branching,

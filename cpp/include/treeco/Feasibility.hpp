@@ -43,21 +43,21 @@ enum class FeasibilityStatus : int8_t {
  *   <vi,x> >= 0   for all i with Relation::GE
  *   <vi,x> >  0   for all i with Relation::GT
  *
- * Strict inequalities are handled using slack variables with margin
- * maximization. Fixed constraints can be added at construction time
- * and cannot be removed later.
+ * as well as a fixed set of linear constraints x ∈ D added at construction but
+ * which cannot be removed.
  */
 class Feasibility {
 public:
   /**
    * @brief Construct a feasibility checker.
    * @param pool Normal vectors defining possible cuts
-   * @param fixedConstraints Fixed constraints included permanently
+   * @param domain Fixed constraints included permanently
    * @param tolerance Numerical tolerance for strict inequality margins
+   * @param useSlacks Whether to use slack variables for strict inequalities
    */
   Feasibility(const std::vector<TernaryVector>& pool,
-              const Domain& fixedConstraints = Domain(),
-              double tolerance = 1e-8);
+              const Domain& domain = Domain(), double tolerance = 1e-8,
+              bool useSlacks = false);
 
   /// Destructor
   ~Feasibility() = default;
@@ -98,6 +98,8 @@ public:
 private:
   const std::vector<TernaryVector>& pool_;  // Reference to the vector pool
   double tolerance_;                        // Numerical tolerance
+  bool useSlacks_;                          // Whether to use slack variables
+
   FeasibilityStatus status_ = FeasibilityStatus::UNKNOWN;  // Current status
   Index numSolve_ = 0;                                     // LP solve counter
 
@@ -114,7 +116,7 @@ private:
       relationsCounts_;                    // Relation counts per pool index
   std::vector<Relation> relationsReduce_;  // Reduced relations per pool index
 
-  void build(const Domain& fixedConstraints);
+  void build(const Domain& domain);
   bool reduce(Index i);
   void update(Index i, bool isNew);
 };

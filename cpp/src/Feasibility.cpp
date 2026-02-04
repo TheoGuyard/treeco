@@ -3,8 +3,12 @@
 namespace treeco {
 
 Feasibility::Feasibility(const std::vector<TernaryVector>& pool,
-                         const Domain& fixedConstraints, double tolerance)
-  : pool_(pool), tolerance_(tolerance), env_(getGurobiEnv()), model_(env_) {
+                         const Domain& domain, double tolerance, bool useSlacks)
+  : pool_(pool)
+  , tolerance_(tolerance)
+  , useSlacks_(useSlacks)
+  , env_(getGurobiEnv())
+  , model_(env_) {
   if (pool_.empty()) { throw std::invalid_argument("Pool cannot be empty"); }
 
   for (const auto& p : pool_) {
@@ -13,7 +17,7 @@ Feasibility::Feasibility(const std::vector<TernaryVector>& pool,
     }
   }
 
-  for (const auto& [w, r, b] : fixedConstraints) {
+  for (const auto& [w, r, b] : domain) {
     if (w.size() != pool_[0].size()) {
       throw std::invalid_argument("Fixed cuts dimension mismatch.");
     }
@@ -23,10 +27,10 @@ Feasibility::Feasibility(const std::vector<TernaryVector>& pool,
     throw std::invalid_argument("Tolerance must be >= 1e-8.");
   }
 
-  build(fixedConstraints);
+  build(domain);
 }
 
-void Feasibility::build(const Domain& fixedConstraints) {
+void Feasibility::build(const Domain& domain) {
   Index numPool = pool_.size();
   Index dimPool = pool_[0].size();
   double slacksUb = 10.0 * tolerance_;
@@ -41,27 +45,28 @@ void Feasibility::build(const Domain& fixedConstraints) {
         model_.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS));
   }
 
-  // Slack variables (to handle strict inequalities)
-  vars_.reserve(numPool);
-  for (Index i = 0; i < numPool; ++i) {
-    vars_.emplace_back(model_.addVar(0.0, slacksUb, 0.0, GRB_CONTINUOUS));
+  if (useSlacks_) {
+    // Slack variables to handle strict inequalities
+    vars_.reserve(numPool);
+    for (Index i = 0; i < numPool; ++i) {
+      vars_.emplace_back(model_.addVar(0.0, slacksUb, 0.0, GRB_CONTINUOUS));
+    }
+    // Add slacks to the objective
+    for (Index i = 0; i < numPool; ++i) { objexpr_ += vars_[i]; }
   }
-
-  // Add slacks to the objective
-  for (Index i = 0; i < numPool; ++i) { objexpr_ += vars_[i]; }
 
   // Precompute linear expressions in the pool of cuts
   linexprs_.reserve(numPool);
   for (Index i = 0; i < numPool; ++i) {
     GRBLinExpr linexpr_ = 0.0;
     for (Index j = 0; j < dimPool; ++j) { linexpr_ += pool_[i][j] * varx_[j]; }
-    linexpr_ += vars_[i];
+    if (useSlacks_) { linexpr_ += vars_[i]; }
     linexprs_.emplace_back(linexpr_);
   }
 
   // Add fixed constrains
   varsFixed_ = std::vector<GRBVar>();
-  for (const auto& [a, b, r] : fixedConstraints) {
+  for (const auto& [a, b, r] : domain) {
     if (r == Relation::RF) {
       throw std::runtime_error("RF relation encountered in fixed constraints.");
     } else if (r == Relation::RT) {
@@ -72,22 +77,24 @@ void Feasibility::build(const Domain& fixedConstraints) {
     GRBLinExpr linexprFixed = b;
     for (Index j = 0; j < dimPool; ++j) { linexprFixed += a[j] * varx_[j]; }
 
-    // Slack for the fixed constraints if needed
-    if (r == Relation::LT) {
-      GRBVar varsFixed = model_.addVar(0.0, slacksUb, 0.0, GRB_CONTINUOUS);
-      linexprFixed += varsFixed;
-      objexpr_ += varsFixed;
-      varsFixed_.push_back(varsFixed);
-    } else if (r == Relation::GT) {
-      GRBVar varsFixed = model_.addVar(0.0, slacksUb, 0.0, GRB_CONTINUOUS);
-      linexprFixed -= varsFixed;
-      objexpr_ += varsFixed;
-      varsFixed_.push_back(varsFixed);
+    if (useSlacks_) {
+      // Slack for the fixed constraints if needed
+      if (r == Relation::LT) {
+        GRBVar varsFixed = model_.addVar(0.0, slacksUb, 0.0, GRB_CONTINUOUS);
+        linexprFixed += varsFixed;
+        objexpr_ += varsFixed;
+        varsFixed_.push_back(varsFixed);
+      } else if (r == Relation::GT) {
+        GRBVar varsFixed = model_.addVar(0.0, slacksUb, 0.0, GRB_CONTINUOUS);
+        linexprFixed -= varsFixed;
+        objexpr_ += varsFixed;
+        varsFixed_.push_back(varsFixed);
+      }
     }
 
     // Add the fixed constraint to the model
     if (r == Relation::LT) {
-      model_.addConstr(linexprFixed, '<', 0.0);
+      model_.addConstr(linexprFixed, '<', useSlacks_ ? 0.0 : -tolerance_);
     } else if (r == Relation::LE) {
       model_.addConstr(linexprFixed, '<', 0.0);
     } else if (r == Relation::EQ) {
@@ -95,7 +102,7 @@ void Feasibility::build(const Domain& fixedConstraints) {
     } else if (r == Relation::GE) {
       model_.addConstr(linexprFixed, '>', 0.0);
     } else if (r == Relation::GT) {
-      model_.addConstr(linexprFixed, '>', 0.0);
+      model_.addConstr(linexprFixed, '>', useSlacks_ ? 0.0 : tolerance_);
     } else {
       throw std::invalid_argument("Unexpected relation in fixed constraints.");
     }
@@ -183,11 +190,11 @@ void Feasibility::update(Index i, bool isNew) {
   } else if (status_ == FeasibilityStatus::FEASIBLE && !isNew) {
     double value = linexprs_[i].getValue();
     bool stillFeasible =
-        (((r == Relation::LT) && (value <= -tolerance_)) ||
+        (((r == Relation::LT) && (value < 0)) ||
          ((r == Relation::LE) && (value <= 0.0)) ||
-         ((r == Relation::EQ) && (std::abs(value) <= tolerance_)) ||
+         ((r == Relation::EQ) && (value == 0.0)) ||
          ((r == Relation::GE) && (value >= 0.0)) ||
-         ((r == Relation::GT) && (value >= tolerance_)) || (r == Relation::RT));
+         ((r == Relation::GT) && (value > 0)) || (r == Relation::RT));
     if (stillFeasible) {
       status_ = FeasibilityStatus::FEASIBLE;
     } else {
@@ -202,11 +209,12 @@ void Feasibility::update(Index i, bool isNew) {
   if (r == Relation::LT) {
     if (alreadyInModel) {
       indexToCstr_[i].set(GRB_CharAttr_Sense, '<');
-      indexToCstr_[i].set(GRB_DoubleAttr_RHS, 0.0);
+      indexToCstr_[i].set(GRB_DoubleAttr_RHS, useSlacks_ ? 0.0 : -tolerance_);
     } else {
-      indexToCstr_[i] = model_.addConstr(linexprs_[i], '<', 0.0);
+      indexToCstr_[i] =
+          model_.addConstr(linexprs_[i], '<', useSlacks_ ? 0.0 : -tolerance_);
     }
-    model_.chgCoeff(indexToCstr_[i], vars_[i], 1.0);
+    if (useSlacks_) { model_.chgCoeff(indexToCstr_[i], vars_[i], 1.0); }
   } else if (r == Relation::LE) {
     if (alreadyInModel) {
       indexToCstr_[i].set(GRB_CharAttr_Sense, '<');
@@ -214,7 +222,7 @@ void Feasibility::update(Index i, bool isNew) {
     } else {
       indexToCstr_[i] = model_.addConstr(linexprs_[i], '<', 0.0);
     }
-    model_.chgCoeff(indexToCstr_[i], vars_[i], 0.0);
+    if (useSlacks_) { model_.chgCoeff(indexToCstr_[i], vars_[i], 0.0); }
   } else if (r == Relation::EQ) {
     if (alreadyInModel) {
       indexToCstr_[i].set(GRB_CharAttr_Sense, '=');
@@ -222,7 +230,7 @@ void Feasibility::update(Index i, bool isNew) {
     } else {
       indexToCstr_[i] = model_.addConstr(linexprs_[i], '=', 0.0);
     }
-    model_.chgCoeff(indexToCstr_[i], vars_[i], 0.0);
+    if (useSlacks_) { model_.chgCoeff(indexToCstr_[i], vars_[i], 0.0); }
   } else if (r == Relation::GE) {
     if (alreadyInModel) {
       indexToCstr_[i].set(GRB_CharAttr_Sense, '>');
@@ -230,7 +238,7 @@ void Feasibility::update(Index i, bool isNew) {
     } else {
       indexToCstr_[i] = model_.addConstr(linexprs_[i], '>', 0.0);
     }
-    model_.chgCoeff(indexToCstr_[i], vars_[i], 0.0);
+    if (useSlacks_) { model_.chgCoeff(indexToCstr_[i], vars_[i], 0.0); }
   } else if (r == Relation::GT) {
     if (alreadyInModel) {
       indexToCstr_[i].set(GRB_CharAttr_Sense, '>');
@@ -238,7 +246,7 @@ void Feasibility::update(Index i, bool isNew) {
     } else {
       indexToCstr_[i] = model_.addConstr(linexprs_[i], '>', 0.0);
     }
-    model_.chgCoeff(indexToCstr_[i], vars_[i], -1.0);
+    if (useSlacks_) { model_.chgCoeff(indexToCstr_[i], vars_[i], -1.0); }
   } else if (r == Relation::RT) {
     // Remove the constraint since it should always be satisfied
     if (alreadyInModel) {
@@ -268,16 +276,18 @@ bool Feasibility::check() {
       status_ = FeasibilityStatus::FEASIBLE;
 
       // Check slacks feasibility according to tolerance_
-      for (const auto& slack : vars_) {
-        if (slack.get(GRB_DoubleAttr_X) < tolerance_) {
-          status_ = FeasibilityStatus::INFEASIBLE;
-          break;
+      if (useSlacks_) {
+        for (const auto& slack : vars_) {
+          if (slack.get(GRB_DoubleAttr_X) < tolerance_) {
+            status_ = FeasibilityStatus::INFEASIBLE;
+            break;
+          }
         }
-      }
-      for (const auto& slack : varsFixed_) {
-        if (slack.get(GRB_DoubleAttr_X) < tolerance_) {
-          status_ = FeasibilityStatus::INFEASIBLE;
-          break;
+        for (const auto& slack : varsFixed_) {
+          if (slack.get(GRB_DoubleAttr_X) < tolerance_) {
+            status_ = FeasibilityStatus::INFEASIBLE;
+            break;
+          }
         }
       }
     }

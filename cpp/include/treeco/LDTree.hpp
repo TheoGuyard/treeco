@@ -102,6 +102,7 @@ public:
    * @param timeLimit Maximum build time in seconds
    * @param tolerance Numerical tolerance for equality comparisons
    * @param deduplicate Remove duplicate feasible points before building
+   * @param useSlacks Use slack variables in strict feasibility checks
    * @param filterChecks Use filtering for faster split validity checks
    * @param exploration Search exploration strategy
    * @param branching Tree branching mode (binary or ternary)
@@ -111,7 +112,7 @@ public:
              double logInterval = 5.0, bool logSave = true,
              double timeLimit = std::numeric_limits<double>::infinity(),
              double tolerance = 1e-8, bool deduplicate = true,
-             bool filterChecks = true,
+             bool useSlacks = false, bool filterChecks = true,
              Exploration exploration = Exploration::ITERATIVE,
              Branching branching = Branching::BINARY,
              SplitScoring splitScoring = SplitScoring::VARIANCE);

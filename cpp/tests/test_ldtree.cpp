@@ -23,8 +23,10 @@ protected:
     points = tsp.getFeasibleSet();
 
     // Create temporary file for file-based tests
-    tempPointsFile = "/tmp/treeco_test_ldtree_points_" + std::to_string(std::rand()) + ".txt";
-    tempOutputFile = "/tmp/treeco_test_ldtree_output_" + std::to_string(std::rand()) + ".c";
+    tempPointsFile = "/tmp/treeco_test_ldtree_points_" +
+                     std::to_string(std::rand()) + ".txt";
+    tempOutputFile =
+        "/tmp/treeco_test_ldtree_output_" + std::to_string(std::rand()) + ".c";
 
     // Write points to file
     std::ofstream outfile(tempPointsFile);
@@ -68,7 +70,9 @@ TEST_F(LDTreeTest, ConstructWithEmptyDomain) {
   EXPECT_TRUE(ldtree.domain().empty());
 }
 
-TEST_F(LDTreeTest, ConstructFromFileNotFound) { EXPECT_THROW(LDTree("/nonexistent/path.txt"), std::runtime_error); }
+TEST_F(LDTreeTest, ConstructFromFileNotFound) {
+  EXPECT_THROW(LDTree("/nonexistent/path.txt"), std::runtime_error);
+}
 
 // ============================================================================
 // Build Tests
@@ -108,12 +112,14 @@ TEST_F(LDTreeTest, BuildWithTolerance) {
 
   EXPECT_TRUE(ldtree.tree().isBuilt());
 
-  EXPECT_THROW(ldtree.build(false, &std::cout, 5.0, true, std::numeric_limits<double>::infinity(),
+  EXPECT_THROW(ldtree.build(false, &std::cout, 5.0, true,
+                            std::numeric_limits<double>::infinity(),
                             1e-10  // Too small tolerance
                             ),
                std::invalid_argument);
 
-  EXPECT_THROW(ldtree.build(false, &std::cout, 5.0, true, std::numeric_limits<double>::infinity(),
+  EXPECT_THROW(ldtree.build(false, &std::cout, 5.0, true,
+                            std::numeric_limits<double>::infinity(),
                             -1e-1  // Invalid tolerance
                             ),
                std::invalid_argument);
@@ -191,7 +197,8 @@ TEST_F(LDTreeTest, QueryResultIsBinary) {
 
 TEST_F(LDTreeTest, DomainAccessor) {
   Domain domain;
-  domain.push_back({RealVector{1.0, -1.0, 0.0, 0.0, 0.0, 0.0}, 0.0, Relation::GE});
+  domain.push_back(
+      {RealVector{1.0, -1.0, 0.0, 0.0, 0.0, 0.0}, 0.0, Relation::GE});
 
   LDTree ldtree(points, domain);
 

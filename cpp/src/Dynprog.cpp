@@ -57,8 +57,8 @@ void Dynprog::run(const DynprogParams& params) {
   logHeader();
 
   // Initialize feasibility checker with splits and input domain specs
-  feasibility_ = std::make_unique<Feasibility>(voronoi_.splits(), domain_,
-                                               params_.tolerance);
+  feasibility_ = std::make_unique<Feasibility>(
+      voronoi_.splits(), domain_, params_.tolerance, params_.useSlacks);
 
   states_.clear();
   regionToStateId_.clear();
@@ -125,13 +125,13 @@ void Dynprog::initPositions() {
     }
 #endif
 
-    const Cone& interiorFace = voronoi_.face(faceId).cone.interior();
-    feasibility_->add(interiorFace.cuts());
-    for (Index splitId = 0; splitId < voronoi_.numSplits(); ++splitId) {
-      const Cone& interiorCone = voronoi_.face(faceId).cone.interior();
+    const Cone& face = voronoi_.face(faceId).cone;
+    const Cone& faceInt = face.interior();
 
+    feasibility_->add(face.cuts());
+    for (Index splitId = 0; splitId < voronoi_.numSplits(); ++splitId) {
       // Check if the split if a face boundary
-      for (const auto& [sid, dir] : interiorCone.cuts()) {
+      for (const auto& [sid, dir] : face.cuts()) {
         if (sid == splitId) {
           positions_[faceId][splitId] = dir;
           break;
@@ -140,29 +140,48 @@ void Dynprog::initPositions() {
 
       if (positions_[faceId][splitId] != Relation::RF) { continue; }
 
-      // Determine position with feasibility check if not boundary
-      // - int(face) ∩ s< = ∅ → face ⊆ s>=
-      // - int(face) ∩ s> = ∅ → face ⊆ s<=
+      // Determine position with feasibility check if not a boundary
+      // - face ∩ s> = ∅ → face ⊆ s<=
+      //    - int(face) ∩ s = ∅ → face ⊆ s< ∪ {0}
+      //    - int(face) ∩ s ≠ ∅ → face ⊆ s< ∪ {s=}
+      // - face ∩ s< = ∅ → face ⊆ s>=
+      //    - int(face) ∩ s = ∅ → face ⊆ s> ∪ {0}
+      //    - int(face) ∩ s ≠ ∅ → face ⊆ s> ∪ {s=}
       // - otherwise → int(face) intersects s< and s>
-      Cut cutLT = Cut(splitId, Relation::LT);
-      feasibility_->add(cutLT);
-      bool checkLT = feasibility_->check();
-      feasibility_->remove(cutLT);
-      if (!checkLT) {
-        positions_[faceId][splitId] = Relation::GT;
-      } else {
-        Cut cutGT = Cut(splitId, Relation::GT);
-        feasibility_->add(cutGT);
-        bool checkGT = feasibility_->check();
-        feasibility_->remove(cutGT);
-        if (!checkGT) {
+
+      Cut cutGT = Cut(splitId, Relation::GT);
+      feasibility_->add(cutGT);
+      bool checkGT = feasibility_->check();
+      feasibility_->remove(cutGT);
+      if (!checkGT) {
+        feasibility_->add(faceInt.cuts());
+        bool checkGE = feasibility_->check();
+        feasibility_->remove(faceInt.cuts());
+        if (!checkGE) {
           positions_[faceId][splitId] = Relation::LT;
+        } else {
+          positions_[faceId][splitId] = Relation::LE;
+        }
+      } else {
+        Cut cutLT = Cut(splitId, Relation::LT);
+        feasibility_->add(cutLT);
+        bool checkLT = feasibility_->check();
+        feasibility_->remove(cutLT);
+        if (!checkLT) {
+          feasibility_->add(faceInt.cuts());
+          bool checkLE = feasibility_->check();
+          feasibility_->remove(faceInt.cuts());
+          if (!checkLE) {
+            positions_[faceId][splitId] = Relation::GT;
+          } else {
+            positions_[faceId][splitId] = Relation::GE;
+          }
         } else {
           positions_[faceId][splitId] = Relation::EQ;
         }
       }
     }
-    feasibility_->remove(interiorFace.cuts());
+    feasibility_->remove(face.cuts());
   }
 
   // Assign whether the input domain contains the origin
@@ -284,15 +303,12 @@ State Dynprog::createState(State& parent, Split& split, Relation cutDir) {
 void Dynprog::buildState(Index stateId) {
   stats_.numStatesBuilt++;
 
-  // Temporary data <splitPos, splitId, dirId, childState> of new children. New
-  // children are registered in bulk at the end of the method to avoid dangling
-  // references of states/splits and reduce memory footprint in GREEDY mode.
-  std::vector<std::tuple<Index, Index, Index, State>> newChildren;
-
   State& state = states_[stateId];
   std::vector<Split>& splits = state.splits;
 
   // ----- Build splits sequentially ----- //
+
+  std::vector<std::tuple<Index, Index, Index, State>> newChildren = {};
 
   double bestSplitScore = std::numeric_limits<double>::infinity();
   Index bestSplitId = INVALID_INDEX;
@@ -315,31 +331,45 @@ void Dynprog::buildState(Index stateId) {
       }
     }
 
-    // Check split validity
+    // Check split validity using already existing child states
     evaluateValidity(state, split, true);
 
     // Continue if split is invalid
     if (!split.valid.value()) { continue; }
 
-    // Recover child number of faces and lower bounds
-    // Note: create missing child states and insert in temporary buffer
+    // Recover child data (instantiate missing children in buffer if needed)
+    Index numNonEmptyChildren = 0;
+    Index numIdenticalChildren = 0;
     Index bestChildLb = 0;
     std::vector<Index> childFaceCounts = {};
     for (Index dirId = 0; dirId < branchDirections_.size(); ++dirId) {
       Relation cutDir = branchDirections_[dirId];
       Index childId = split.childIds[dirId];
-      if (childId != INVALID_INDEX) {
-        bestChildLb = std::max(bestChildLb, safeAdd(states_[childId].lbHeight));
-        childFaceCounts.push_back(states_[childId].faceIds.size());
-      } else {
-        State child = createState(state, split, cutDir);
 
-        bestChildLb = std::max(bestChildLb, safeAdd(child.lbHeight));
-        childFaceCounts.push_back(child.faceIds.size());
-
+      if (childId == INVALID_INDEX) {
+        State child = createState(states_[stateId],
+                                  states_[stateId].splits[splitPos], cutDir);
         newChildren.push_back(
             std::make_tuple(splitPos, split.id, dirId, std::move(child)));
       }
+
+      const State& child = (childId != INVALID_INDEX)
+                               ? states_[childId]
+                               : std::get<3>(newChildren.back());
+
+      if (child.faceIds.size() > 0) { numNonEmptyChildren += 1; }
+      if (child.faceIds == states_[stateId].faceIds) {
+        numIdenticalChildren += 1;
+      }
+      bestChildLb = std::max(bestChildLb, safeAdd(child.lbHeight));
+      childFaceCounts.push_back(child.faceIds.size());
+    }
+
+    // Evaluate split relevance (mark as invalid if not and continue)
+    if (numNonEmptyChildren <= 1 ||
+        numIdenticalChildren >= branchDirections_.size() - 1) {
+      split.valid = false;
+      continue;
     }
 
     // Evaluate split score
@@ -358,11 +388,28 @@ void Dynprog::buildState(Index stateId) {
 
   // Warning: from here, state and splits references are now dangling
 
-  for (const auto& [splitPos, splitId, dirId, child] : newChildren) {
+  for (auto& [splitPos, splitId, dirId, child] : newChildren) {
     // In GREEDY exploration mode, only create children for the best split
     if (params_.exploration == Exploration::GREEDY) {
       if (splitId != bestSplitId) { continue; }
     }
+
+    // Skip children of invalid splits
+    if (!states_[stateId].splits[splitPos].valid.value()) { continue; }
+
+    // Remove any pending split in the children proven to be invalid
+    std::unordered_set<Index> invalidParentSplits;
+    for (const auto& s : states_[stateId].splits) {
+      if (s.valid.has_value() && !s.valid.value()) {
+        invalidParentSplits.insert(s.id);
+      }
+    }
+    child.splits.erase(
+        std::remove_if(child.splits.begin(), child.splits.end(),
+                       [&](const Split& childSplit) {
+                         return invalidParentSplits.contains(childSplit.id);
+                       }),
+        child.splits.end());
 
     // Register new child in memoization
     Index childId = states_.size();
@@ -383,7 +430,7 @@ void Dynprog::buildState(Index stateId) {
                      [](const auto& split) { return !split.valid.value(); }),
       std::end(states_[stateId].splits));
 
-  // Check if the state became a leaf (no valid splits)
+  // Check if the state became a leaf (no more valid splits)
   if (states_[stateId].splits.size() == 0) {
     states_[stateId].lbHeight = 0;
     states_[stateId].ubHeight = 0;
@@ -717,28 +764,40 @@ std::optional<bool> Dynprog::inferChildFace(State& state, Split& split,
   Relation position = positions_[faceId][split.id];
   const Cone& stateCone = state.region;
 
-  if (position == Relation::LT) {
-    if (cutDir == Relation::GT) {
+  if (cutDir == Relation::LT) {
+    if (position == Relation::GE || position == Relation::GT) {
       return false;
-    } else if (cutDir == Relation::LT) {
+    } else if (position == Relation::LE || position == Relation::LT) {
       if (stateCone.isOpen()) { return true; }
-    } else if (cutDir == Relation::EQ) {
-      if (stateCone.containsOrigin() && domainContainsOrigin_) { return true; }
+    } else if (position == Relation::EQ) {
+      // no inference possible
+    } else {
+      throw std::invalid_argument("Unknown relation type");
     }
-  } else if (position == Relation::GT) {
-    if (cutDir == Relation::LT) {
+  } else if (cutDir == Relation::GT) {
+    if (position == Relation::LE || position == Relation::LT) {
       return false;
-    } else if (cutDir == Relation::GT) {
+    } else if (position == Relation::GE || position == Relation::GT) {
       if (stateCone.isOpen()) { return true; }
-    } else if (cutDir == Relation::EQ) {
-      if (stateCone.containsOrigin() && domainContainsOrigin_) { return true; }
+    } else if (position == Relation::EQ) {
+      // no inference possible
+    } else {
+      throw std::invalid_argument("Unknown relation type");
     }
-  } else if (position == Relation::EQ) {
-    ///
+  } else if (cutDir == Relation::EQ) {
+    if (stateCone.isOpen()) {
+      if (position == Relation::LT || position == Relation::GT) {
+        return false;
+      }
+    }
+  } else {
+    throw std::invalid_argument("Unknown cut direction");
   }
 
+  // Ultimate check if no inference passed
   if (childContainsFaceCenter(state, split, cutDir, faceId)) { return true; }
 
+  // Fallback: no inference possible
   return std::nullopt;
 }
 

@@ -16,7 +16,8 @@ using namespace treeco;
 // ============================================================================
 
 TEST(ExplicitProblemTest, BasicConstruction) {
-  std::vector<BinaryVector> feasibleSet = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 1}};
+  std::vector<BinaryVector> feasibleSet = {
+      {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 1}};
 
   Explicit problem(feasibleSet);
 
@@ -61,7 +62,9 @@ TEST(TSPTest, BasicConstruction) {
   EXPECT_EQ(tsp.dimension(), 6);
 }
 
-TEST(TSPTest, TooFewCitiesThrows) { EXPECT_THROW(Tsp(2), std::invalid_argument); }
+TEST(TSPTest, TooFewCitiesThrows) {
+  EXPECT_THROW(Tsp(2), std::invalid_argument);
+}
 
 TEST(TSPTest, EdgeIndexing) {
   Tsp tsp(4);
@@ -127,7 +130,9 @@ TEST(MaxCutTest, BasicConstruction) {
   EXPECT_EQ(maxcut.dimension(), 6);
 }
 
-TEST(MaxCutTest, TooFewVerticesThrows) { EXPECT_THROW(Maxcut(1), std::invalid_argument); }
+TEST(MaxCutTest, TooFewVerticesThrows) {
+  EXPECT_THROW(Maxcut(1), std::invalid_argument);
+}
 
 TEST(MaxCutTest, EdgeIndexing) {
   Maxcut maxcut(4);

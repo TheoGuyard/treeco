@@ -28,6 +28,8 @@ Args parseArgs(int argc, char* argv[]) {
       args.tolerance = std::stod(argv[++i]);
     } else if (arg == "--no-deduplicate") {
       args.deduplicate = false;
+    } else if (arg == "--use-slacks") {
+      args.useSlacks = true;
     } else if (arg == "--no-filter-checks") {
       args.filterChecks = false;
     } else if (arg == "--exploration" && i + 1 < argc) {
@@ -73,6 +75,8 @@ void printUsage(const char* progName, std::ostream* outputStream) {
   out << "  --no-deduplicate      Disable point deduplication\n";
   out << "\n";
   out << "Dynamic programming parameters:\n";
+  out << "  --use-slacks              Use of slack variables in feasibility "
+         "checks\n";
   out << "  --no-filter-checks        Disable filter checks optimization\n";
   out << "  --exploration <mode>      Exploration: greedy, iterative, "
          "exhaustive (default: iterative)\n";

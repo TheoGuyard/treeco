@@ -284,6 +284,7 @@ struct DynprogParams {
   double timeLimit =
       std::numeric_limits<double>::infinity();  // Time limit in seconds
   double tolerance = 1e-8;                      // Numerical tolerance
+  bool useSlacks = false;    // Use slack variables in feasibility
   bool filterChecks = true;  // Use filtering for fast validity checks
   Exploration exploration = Exploration::ITERATIVE;  // Exploration strategy
   Branching branching = Branching::BINARY;           // Branching mode
