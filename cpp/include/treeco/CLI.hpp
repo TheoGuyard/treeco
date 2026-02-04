@@ -35,6 +35,7 @@ struct Args {
 
   bool deduplicate = true;  // Remove duplicate points
 
+  bool useSlacks = false;    // Use slack variables in feasibility checks
   bool filterChecks = true;  // Use filtering for validity checks
   Exploration exploration = Exploration::ITERATIVE;  // Exploration strategy
   Branching branching = Branching::BINARY;           // Branching mode

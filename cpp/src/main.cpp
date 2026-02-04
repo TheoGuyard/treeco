@@ -84,8 +84,8 @@ int main(int argc, char* argv[]) {
 
     ldtree.build(args.verbose, &out, args.logInterval, args.logSave,
                  args.timeLimit, args.tolerance, args.deduplicate,
-                 args.filterChecks, args.exploration, args.branching,
-                 args.splitScoring);
+                 args.useSlacks, args.filterChecks, args.exploration,
+                 args.branching, args.splitScoring);
 
     // ====================================================================
     // Perform queries

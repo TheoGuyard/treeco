@@ -273,8 +273,8 @@ public:
   /// Check whether the cone is open
   bool isOpen() const;
 
-  /// Check whether the cone contains the origin
-  bool containsOrigin() const;
+  /// Check whether the cone is pointed
+  bool isPointed() const;
 
   /// Remove all boundaries (reset to full space)
   void clear();
@@ -302,11 +302,11 @@ private:
   /// Set of cuts defining the cone boundaries
   std::set<Cut> cuts_ = {};
 
-  /// Whether the cone is open
+  /// Whether the cone is open (no cuts or at least one strict inequality)
   bool isOpen_ = true;
 
-  /// Whether the cone contains the origin
-  bool containsOrigin_ = true;
+  /// Whether the cone is pointed
+  bool isPointed_ = true;
 };
 
 /// Hasher functor for Cone objects (for use in unordered containers)

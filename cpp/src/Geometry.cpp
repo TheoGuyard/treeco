@@ -48,15 +48,16 @@ Cone::Cone(const std::vector<Cut>& cuts) {
 }
 
 void Cone::addCut(const Cut& cut) {
+  if (cuts_.size() == 0) { isOpen_ = false; }
+
+  isOpen_ = isOpen_ || (cut.dir == Relation::LT || cut.dir == Relation::GT ||
+                        cut.dir == Relation::RF || cut.dir == Relation::RT);
+
+  isPointed_ =
+      isPointed_ && !(cut.dir == Relation::LT || cut.dir == Relation::GT ||
+                      cut.dir == Relation::RF);
+
   cuts_.insert(cut);
-  if (cut.dir == Relation::LE || cut.dir == Relation::GE ||
-      cut.dir == Relation::EQ) {
-    isOpen_ = false;
-  }
-  if (cut.dir == Relation::LT || cut.dir == Relation::GT ||
-      cut.dir == Relation::RF) {
-    containsOrigin_ = false;
-  }
 }
 
 void Cone::addCut(Index hid, Relation dir) { addCut(Cut(hid, dir)); }
@@ -69,7 +70,7 @@ bool Cone::isFullSpace() const { return cuts_.empty(); }
 
 bool Cone::isOpen() const { return isOpen_; }
 
-bool Cone::containsOrigin() const { return containsOrigin_; }
+bool Cone::isPointed() const { return isPointed_; }
 
 void Cone::clear() { cuts_.clear(); }
 
