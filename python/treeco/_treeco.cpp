@@ -89,7 +89,7 @@ void bind_module_geometry(py::module_ &m) {
     py::class_<Cone>(m, "Cone")
         .def_property_readonly("cuts", &Cone::cuts)
         .def_property_readonly("is_open", &Cone::isOpen)
-        .def_property_readonly("contains_origin", &Cone::containsOrigin)
+        .def_property_readonly("is_pointed", &Cone::isPointed)
         .def(py::pickle(
             [](const Cone &c) { return py::make_tuple(c.cuts()); },
             [](py::tuple t) { return Cone(t[0].cast<std::vector<Cut>>()); }
@@ -415,6 +415,7 @@ void bind_module_ldtree(py::module_ &m) {
                 double          timeLimit,
                 double          tolerance,
                 bool            deduplicate,
+                bool            useSlacks,
                 bool            filterChecks,
                 Exploration     exploration,
                 Branching       branching,
@@ -428,6 +429,7 @@ void bind_module_ldtree(py::module_ &m) {
                     timeLimit,
                     tolerance,
                     deduplicate,
+                    useSlacks,
                     filterChecks,
                     exploration,
                     branching,
@@ -440,6 +442,7 @@ void bind_module_ldtree(py::module_ &m) {
             py::arg("time_limit")       = std::numeric_limits<double>::infinity(),
             py::arg("tolerance")        = 1e-8,
             py::arg("deduplicate")      = true,
+            py::arg("use_slacks")       = false,
             py::arg("filter_checks")    = true,
             py::arg("exploration")      = Exploration::ITERATIVE,
             py::arg("branching")        = Branching::BINARY,
