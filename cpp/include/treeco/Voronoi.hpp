@@ -68,21 +68,19 @@ struct Edge {
    * @param leFaceId Index of the face on the LE side
    * @param geFaceId Index of the face on the GE side
    */
-  Edge(Index splitId, Index leFaceId, Index geFaceId)
-    : splitId(splitId), leFaceId(leFaceId), geFaceId(geFaceId) {}
+  Edge(Index splitId, Index leFaceId, Index geFaceId) : splitId(splitId), leFaceId(leFaceId), geFaceId(geFaceId) {}
 };
 
 /**
  * @brief Parameters for Voronoi diagram construction.
  */
 struct VoronoiParams {
-  bool verbose = false;                     // Enable verbose logging
-  std::ostream* outputStream = &std::cout;  // Output stream for logs
-  double logInterval = 5.0;                 // Logging interval in seconds
-  double timeLimit =
-      std::numeric_limits<double>::infinity();  // Time limit in seconds
-  double tolerance = 1e-8;                      // Numerical tolerance
-  bool deduplicate = true;                      // Remove duplicate points
+  bool verbose = false;                                        // Enable verbose logging
+  std::ostream* outputStream = &std::cout;                     // Output stream for logs
+  double logInterval = 5.0;                                    // Logging interval in seconds
+  double timeLimit = std::numeric_limits<double>::infinity();  // Time limit in seconds
+  double tolerance = 1e-8;                                     // Numerical tolerance
+  bool deduplicate = true;                                     // Remove duplicate points
 };
 
 /**
@@ -111,16 +109,10 @@ public:
   Voronoi(const std::vector<SimplexVector>& points);
 
   /// Serialization constructor
-  Voronoi(const std::vector<SimplexVector>& points,
-          const std::vector<TernaryVector>& splits,
-          const std::vector<Face>& faces, const std::vector<Edge>& edges,
-          const VoronoiParams& params, const VoronoiStats& stats)
-    : points_(points)
-    , splits_(splits)
-    , faces_(faces)
-    , edges_(edges)
-    , params_(params)
-    , stats_(stats) {}
+  Voronoi(const std::vector<SimplexVector>& points, const std::vector<TernaryVector>& splits,
+          const std::vector<Face>& faces, const std::vector<Edge>& edges, const VoronoiParams& params,
+          const VoronoiStats& stats)
+    : points_(points), splits_(splits), faces_(faces), edges_(edges), params_(params), stats_(stats) {}
 
   /**
    * @brief Build the Voronoi diagram.
@@ -191,8 +183,7 @@ private:
   Clock::time_point checkTime_;  // Last logging time
 
   void logHeader() const;
-  void logProgress(const Adjacency& adj, Index i,
-                   const std::string& message = "");
+  void logProgress(const Adjacency& adj, Index i, const std::string& message = "");
   void logFooter() const;
 };
 

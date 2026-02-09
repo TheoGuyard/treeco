@@ -55,9 +55,8 @@ public:
    * @param tolerance Numerical tolerance for strict inequality margins
    * @param useSlacks Whether to use slack variables for strict inequalities
    */
-  Feasibility(const std::vector<TernaryVector>& pool,
-              const Domain& domain = Domain(), double tolerance = 1e-8,
-              bool useSlacks = false);
+  Feasibility(const std::vector<TernaryVector>& pool, const Domain& domain = Domain(), double tolerance = 1e-8,
+              bool useSlacks = true);
 
   /// Destructor
   ~Feasibility() = default;
@@ -110,11 +109,9 @@ private:
   std::vector<GRBLinExpr> linexprs_;  // Linear expressions for pool vectors
   std::vector<GRBVar> varsFixed_;     // Fixed constraint variables
 
-  std::unordered_map<Index, GRBConstr>
-      indexToCstr_;  // Mapping from pool index to constraint
-  std::vector<std::unordered_map<Relation, Index>>
-      relationsCounts_;                    // Relation counts per pool index
-  std::vector<Relation> relationsReduce_;  // Reduced relations per pool index
+  std::unordered_map<Index, GRBConstr> indexToCstr_;                  // Mapping from pool index to constraint
+  std::vector<std::unordered_map<Relation, Index>> relationsCounts_;  // Relation counts per pool index
+  std::vector<Relation> relationsReduce_;                             // Reduced relations per pool index
 
   void build(const Domain& domain);
   bool reduce(Index i);

@@ -34,8 +34,7 @@ std::vector<BinaryVector> readPoints(const std::string& filepath);
  * @param filepath Output file path
  * @param points Vector of binary vectors to write
  */
-void writePoints(const std::string& filepath,
-                 const std::vector<BinaryVector>& points);
+void writePoints(const std::string& filepath, const std::vector<BinaryVector>& points);
 
 /**
  * @brief Read domain constraints from a file.
@@ -63,8 +62,7 @@ std::vector<RealVector> readQueries(const std::string& filepath);
  * @param filepath Output file path
  * @param queries Vector of cost vectors to write
  */
-void writeQueries(const std::string& filepath,
-                  const std::vector<RealVector>& queries);
+void writeQueries(const std::string& filepath, const std::vector<RealVector>& queries);
 
 }  // namespace treeco
 

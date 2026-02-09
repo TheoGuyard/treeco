@@ -71,6 +71,8 @@ class LDTree:
         time_limit: float = float("inf"),
         tolerance: float = 1e-8,
         deduplicate: bool = True,
+        use_slacks: bool = True,
+        strong_checks: bool = True,
         filter_checks: bool = True,
         exploration: Exploration = Exploration.iterative,
         branching: Branching = Branching.binary,
@@ -89,6 +91,8 @@ class LDTree:
             time_limit: Maximum build time in seconds
             tolerance: Numerical tolerance for equality comparisons
             deduplicate: Remove duplicate feasible points before building
+            use_slacks: Use slack variables for numerical stability
+            strong_checks: Use strong checks while building states
             filter_checks: Use filtering for faster split validity checks
             exploration: Search exploration strategy
             branching: Tree branching mode (binary or ternary)

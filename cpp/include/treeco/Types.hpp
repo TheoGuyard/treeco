@@ -55,8 +55,7 @@ using RealVector = std::vector<double>;     // Real-valued vector in R^n
  * @param out Output stream (default: std::cout)
  */
 template <typename T>
-inline void printVector(const std::vector<T>& vec,
-                        std::ostream* out = &std::cout) {
+inline void printVector(const std::vector<T>& vec, std::ostream* out = &std::cout) {
   (*out) << "[";
   for (Index i = 0; i < vec.size(); ++i) {
     if constexpr (std::is_same_v<T, int8_t>) {

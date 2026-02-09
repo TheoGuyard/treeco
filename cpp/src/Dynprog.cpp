@@ -4,8 +4,7 @@ namespace treeco {
 
 std::ostream& operator<<(std::ostream& oss, const DynprogStats& stats) {
   oss << "Dynprog statistics\n";
-  oss << "  total time     : " << std::fixed << std::setprecision(4)
-      << stats.runTime << "\n";
+  oss << "  total time     : " << std::fixed << std::setprecision(4) << stats.runTime << "\n";
   oss << "  iterations     : " << stats.numIters << "\n";
   oss << "  evaluations    : " << stats.numEvals << "\n";
   oss << "  states created : " << stats.numStates << "\n";
@@ -20,12 +19,8 @@ std::ostream& operator<<(std::ostream& oss, const DynprogStats& stats) {
   return oss;
 }
 
-Dynprog::Dynprog(const Voronoi& voronoi, const Domain& domain)
-  : voronoi_(voronoi), domain_(domain) {
-  if (!voronoi_.isBuilt()) {
-    throw std::invalid_argument(
-        "Voronoi diagram must be built before using Dynprog");
-  }
+Dynprog::Dynprog(const Voronoi& voronoi, const Domain& domain) : voronoi_(voronoi), domain_(domain) {
+  if (!voronoi_.isBuilt()) { throw std::invalid_argument("Voronoi diagram must be built before using Dynprog"); }
 }
 
 void Dynprog::run(const DynprogParams& params) {
@@ -57,8 +52,7 @@ void Dynprog::run(const DynprogParams& params) {
   logHeader();
 
   // Initialize feasibility checker with splits and input domain specs
-  feasibility_ = std::make_unique<Feasibility>(
-      voronoi_.splits(), domain_, params_.tolerance, params_.useSlacks);
+  feasibility_ = std::make_unique<Feasibility>(voronoi_.splits(), domain_, params_.tolerance, params_.useSlacks);
 
   states_.clear();
   regionToStateId_.clear();
@@ -97,8 +91,7 @@ void Dynprog::run(const DynprogParams& params) {
   // ------------------------------------------
 
   // Fill remaining statistics fields
-  stats_.runTime =
-      std::chrono::duration<double>(Clock::now() - startTime_).count();
+  stats_.runTime = std::chrono::duration<double>(Clock::now() - startTime_).count();
   stats_.numStates = states_.size();
   stats_.lpSolved = feasibility_->numSolve();
   stats_.optimalDepth = states_[rootId_].ubHeight;
@@ -111,9 +104,7 @@ void Dynprog::run(const DynprogParams& params) {
 void Dynprog::initPositions() {
   // Initialize position cache container with RF values (unknown position)
   positions_.resize(voronoi_.numFaces());
-  for (auto& facePositions : positions_) {
-    facePositions.resize(voronoi_.numSplits(), Relation::RF);
-  }
+  for (auto& facePositions : positions_) { facePositions.resize(voronoi_.numSplits(), Relation::RF); }
 
   // Precompute all positions
   for (Index faceId = 0; faceId < voronoi_.numFaces(); ++faceId) {
@@ -183,49 +174,6 @@ void Dynprog::initPositions() {
     }
     feasibility_->remove(face.cuts());
   }
-
-  // Assign whether the input domain contains the origin
-  BinaryVector origin(voronoi_.dimPoints(), 0);
-  domainContainsOrigin_ = true;
-  for (const auto& [a, b, rel] : domain_) {
-    double value = dot(a, origin) + b;
-    switch (rel) {
-      case Relation::LT:
-        if (value >= -params_.tolerance) {
-          domainContainsOrigin_ = false;
-          break;
-        }
-      case Relation::LE:
-        if (value >= 0.0) {
-          domainContainsOrigin_ = false;
-          break;
-        }
-      case Relation::EQ:
-        if (std::abs(value) > params_.tolerance) {
-          domainContainsOrigin_ = false;
-          break;
-        }
-      case Relation::GE:
-        if (value <= -params_.tolerance) {
-          domainContainsOrigin_ = false;
-          break;
-        }
-      case Relation::GT:
-        if (value <= 0.0) {
-          domainContainsOrigin_ = false;
-          break;
-        }
-      case Relation::RT:
-        // Always true constraint, do nothing
-        break;
-      case Relation::RF:
-        domainContainsOrigin_ = false;
-        break;
-      default:
-        throw std::invalid_argument("Unknown relation in domain constraints.");
-    }
-    if (!domainContainsOrigin_) { break; }
-  }
 }
 
 void Dynprog::initRootState() {
@@ -235,9 +183,7 @@ void Dynprog::initRootState() {
   // Initialize root faces (all faces if no input domain, else filtered)
   root.faceIds.reserve(voronoi_.numFaces());
   if (domain_.empty()) {
-    for (Index faceId = 0; faceId < voronoi_.numFaces(); ++faceId) {
-      root.faceIds.push_back(faceId);
-    }
+    for (Index faceId = 0; faceId < voronoi_.numFaces(); ++faceId) { root.faceIds.push_back(faceId); }
   } else {
     for (Index faceId = 0; faceId < voronoi_.numFaces(); ++faceId) {
       const Face& face = voronoi_.face(faceId);
@@ -250,9 +196,7 @@ void Dynprog::initRootState() {
 
   // Initialize root splits (all unbuild splits)
   root.splits.reserve(voronoi_.numSplits());
-  for (Index splitId = 0; splitId < voronoi_.numSplits(); ++splitId) {
-    root.splits.push_back(Split{splitId});
-  }
+  for (Index splitId = 0; splitId < voronoi_.numSplits(); ++splitId) { root.splits.push_back(Split{splitId}); }
 
   // Initialize root lower bound
   evaluateLowerBound(root);
@@ -263,7 +207,29 @@ void Dynprog::initRootState() {
   states_.push_back(root);
 }
 
-State Dynprog::createState(State& parent, Split& split, Relation cutDir) {
+Index Dynprog::getOrCreateChildId(Index parentId, Index splitPos, Relation cutDir) {
+  State& parent = states_[parentId];
+  Split& split = states_[parentId].splits[splitPos];
+
+  const Cut childCut = Cut(split.id, cutDir);
+  const Cone childCone = parent.region.refine(childCut);
+
+  // Recover child id from memoization or create new child
+  Index childId = INVALID_INDEX;
+  auto itChild = regionToStateId_.find(childCone);
+  if (itChild != regionToStateId_.end()) {
+    childId = itChild->second;
+  } else {
+    State child = createState(parent, split, cutDir);
+    childId = states_.size();
+    regionToStateId_[child.region] = childId;
+    states_.push_back(std::move(child));
+  }
+
+  return childId;
+}
+
+State Dynprog::createState(const State& parent, const Split& split, Relation cutDir) {
   Cut cut = Cut(split.id, cutDir);
   Cone region = parent.region.refine(cut);
   State child = State{region};
@@ -300,6 +266,21 @@ State Dynprog::createState(State& parent, Split& split, Relation cutDir) {
   return child;
 }
 
+State Dynprog::dummyChild(const State& parent, const Split& split, Relation cutDir, const Cone& region) {
+  State child = State{region};
+
+  child.faceIds.reserve(parent.faceIds.size());
+  for (Index faceId : parent.faceIds) {
+    std::optional<bool> isEmpty = inferChildFace(parent, split, cutDir, faceId);
+    if (isEmpty.has_value() && isEmpty.value()) { child.faceIds.push_back(faceId); }
+  }
+  child.faceIds.shrink_to_fit();
+
+  evaluateLowerBound(child);
+
+  return child;
+}
+
 void Dynprog::buildState(Index stateId) {
   stats_.numStatesBuilt++;
 
@@ -308,67 +289,77 @@ void Dynprog::buildState(Index stateId) {
 
   // ----- Build splits sequentially ----- //
 
-  std::vector<std::tuple<Index, Index, Index, State>> newChildren = {};
+  // Buffer to store new children created newChildren[splitPos][cutDir] = child
+  std::map<Index, std::map<Index, State>> newChildren = {};
 
   double bestSplitScore = std::numeric_limits<double>::infinity();
   Index bestSplitId = INVALID_INDEX;
   Index bestSplitLb = MAX_DEPTH;
+  std::vector<Index> invalidSplitIds = {};
 
   feasibility_->add(state.region.cuts());
   for (Index splitPos = 0; splitPos < splits.size(); ++splitPos) {
     Split& split = splits[splitPos];
 
-    // Recover child indices from memoization or mark as not found
-    for (Index i = 0; i < branchDirections_.size(); ++i) {
-      Relation cutDir = branchDirections_[i];
-      Cut childCut = Cut(split.id, cutDir);
-      Cone childRegion = state.region.refine(childCut);
-      auto itChild = regionToStateId_.find(childRegion);
-      if (itChild != regionToStateId_.end()) {
-        split.childIds[i] = itChild->second;
-      } else {
-        split.childIds[i] = INVALID_INDEX;
-      }
-    }
-
-    // Check split validity using already existing child states
-    evaluateValidity(state, split, true);
-
-    // Continue if split is invalid
-    if (!split.valid.value()) { continue; }
-
-    // Recover child data (instantiate missing children in buffer if needed)
-    Index numNonEmptyChildren = 0;
-    Index numIdenticalChildren = 0;
-    Index bestChildLb = 0;
+    // Split child data
+    Index childNonempty = 0;
+    Index childIdentical = 0;
+    Index childBestLb = 0;
     std::vector<Index> childFaceCounts = {};
+
     for (Index dirId = 0; dirId < branchDirections_.size(); ++dirId) {
       Relation cutDir = branchDirections_[dirId];
+      Cut childCut = Cut(split.id, cutDir);
+      Cone childRegion = state.region.refine(childCut);
+
+      // Recover child indices from memoization
+      // If not found and strong checks enabled: instantiate new child state
+      auto itChild = regionToStateId_.find(childRegion);
+      if (itChild != regionToStateId_.end()) {
+        split.childIds[dirId] = itChild->second;
+      } else {
+        split.childIds[dirId] = INVALID_INDEX;
+        if (params_.strongChecks) {
+          State child = createState(state, split, cutDir);
+          newChildren[splitPos][dirId] = std::move(child);
+        }
+      }
+
+      // Recover child (dummy child if not found and strong checks disabled)
       Index childId = split.childIds[dirId];
+      const State& child = (childId != INVALID_INDEX) ? states_[childId]
+                           : params_.strongChecks     ? newChildren[splitPos][dirId]
+                                                      : dummyChild(state, split, cutDir, childRegion);
 
-      if (childId == INVALID_INDEX) {
-        State child = createState(states_[stateId],
-                                  states_[stateId].splits[splitPos], cutDir);
-        newChildren.push_back(
-            std::make_tuple(splitPos, split.id, dirId, std::move(child)));
-      }
-
-      const State& child = (childId != INVALID_INDEX)
-                               ? states_[childId]
-                               : std::get<3>(newChildren.back());
-
-      if (child.faceIds.size() > 0) { numNonEmptyChildren += 1; }
-      if (child.faceIds == states_[stateId].faceIds) {
-        numIdenticalChildren += 1;
-      }
-      bestChildLb = std::max(bestChildLb, safeAdd(child.lbHeight));
+      // Update child data
+      if (child.faceIds.size() > 0) { childNonempty += 1; }
+      if (child.faceIds == state.faceIds) { childIdentical += 1; }
+      childBestLb = std::max(childBestLb, safeAdd(child.lbHeight));
       childFaceCounts.push_back(child.faceIds.size());
+
+      // Infer split validity
+      if (params_.filterChecks) {
+        if (childNonempty >= 2) { split.valid = true; }
+        if (childIdentical >= 1) { split.valid = false; }
+      }
+
+      // Break if split found invalid
+      if (split.valid.has_value() && !split.valid.value()) { break; }
     }
 
-    // Evaluate split relevance (mark as invalid if not and continue)
-    if (numNonEmptyChildren <= 1 ||
-        numIdenticalChildren >= branchDirections_.size() - 1) {
-      split.valid = false;
+    // Check split validity if not already inferred
+    if (!split.valid.has_value()) {
+      Cut cut = Cut(split.id, Relation::EQ);
+      feasibility_->add(state.region.cuts());
+      feasibility_->add(cut);
+      split.valid = feasibility_->check();
+      feasibility_->remove(cut);
+      feasibility_->remove(state.region.cuts());
+    }
+
+    // Mark invalid splits and continue
+    if (!split.valid.value()) {
+      invalidSplitIds.push_back(split.id);
       continue;
     }
 
@@ -380,42 +371,38 @@ void Dynprog::buildState(Index stateId) {
       bestSplitScore = split.score;
       bestSplitId = split.id;
     }
-    if (bestChildLb < bestSplitLb) { bestSplitLb = bestChildLb; }
+    if (childBestLb < bestSplitLb) { bestSplitLb = childBestLb; }
   }
   feasibility_->remove(state.region.cuts());
 
-  // ----- Insert new child states in memoization ----- //
+  // ----- Insert new children in memoization ----- //
 
-  // Warning: from here, state and splits references are now dangling
+  // Warning: state and splits references are dangling from here
 
-  for (auto& [splitPos, splitId, dirId, child] : newChildren) {
-    // In GREEDY exploration mode, only create children for the best split
-    if (params_.exploration == Exploration::GREEDY) {
-      if (splitId != bestSplitId) { continue; }
-    }
-
-    // Skip children of invalid splits
-    if (!states_[stateId].splits[splitPos].valid.value()) { continue; }
-
-    // Remove any pending split in the children proven to be invalid
-    std::unordered_set<Index> invalidParentSplits;
-    for (const auto& s : states_[stateId].splits) {
-      if (s.valid.has_value() && !s.valid.value()) {
-        invalidParentSplits.insert(s.id);
+  for (auto& [splitPos, splitChildren] : newChildren) {
+    for (auto& [dirId, child] : splitChildren) {
+      // For GREEDY exploration, only instantiate children of the best split
+      if (params_.exploration == Exploration::GREEDY) {
+        if (states_[stateId].splits[splitPos].id != bestSplitId) { continue; }
       }
-    }
-    child.splits.erase(
-        std::remove_if(child.splits.begin(), child.splits.end(),
-                       [&](const Split& childSplit) {
-                         return invalidParentSplits.contains(childSplit.id);
-                       }),
-        child.splits.end());
 
-    // Register new child in memoization
-    Index childId = states_.size();
-    regionToStateId_[child.region] = childId;
-    states_[stateId].splits[splitPos].childIds[dirId] = childId;
-    states_.push_back(std::move(child));
+      // Skip children of invalid splits
+      if (!states_[stateId].splits[splitPos].valid.value()) { continue; }
+
+      // Remove any pending invalid child split
+      child.splits.erase(std::remove_if(child.splits.begin(), child.splits.end(),
+                                        [&](const Split& childSplit) {
+                                          auto it = find(invalidSplitIds.begin(), invalidSplitIds.end(), childSplit.id);
+                                          return it != invalidSplitIds.end();
+                                        }),
+                         child.splits.end());
+
+      // Register child in memoization
+      Index childId = states_.size();
+      regionToStateId_[child.region] = childId;
+      states_[stateId].splits[splitPos].childIds[dirId] = childId;
+      states_.push_back(std::move(child));
+    }
   }
 
   // ----- Register building results in state ----- //
@@ -424,11 +411,9 @@ void Dynprog::buildState(Index stateId) {
   states_[stateId].isBuilt = true;
 
   // Remove invalid splits
-  states_[stateId].splits.erase(
-      std::remove_if(std::begin(states_[stateId].splits),
-                     std::end(states_[stateId].splits),
-                     [](const auto& split) { return !split.valid.value(); }),
-      std::end(states_[stateId].splits));
+  states_[stateId].splits.erase(std::remove_if(std::begin(states_[stateId].splits), std::end(states_[stateId].splits),
+                                               [](const auto& split) { return !split.valid.value(); }),
+                                std::end(states_[stateId].splits));
 
   // Check if the state became a leaf (no more valid splits)
   if (states_[stateId].splits.size() == 0) {
@@ -440,21 +425,14 @@ void Dynprog::buildState(Index stateId) {
   }
 
   // Sort splits by ascending score
-  std::stable_sort(std::begin(states_[stateId].splits),
-                   std::end(states_[stateId].splits),
-                   [](const Split& splitA, const Split& splitB) {
-                     return splitA.score < splitB.score;
-                   });
+  std::stable_sort(std::begin(states_[stateId].splits), std::end(states_[stateId].splits),
+                   [](const Split& splitA, const Split& splitB) { return splitA.score < splitB.score; });
 
   // Update the state lower bound
-  if (bestSplitLb != MAX_DEPTH) {
-    states_[stateId].lbHeight =
-        std::max(states_[stateId].lbHeight, bestSplitLb);
-  }
+  if (bestSplitLb != MAX_DEPTH) { states_[stateId].lbHeight = std::max(states_[stateId].lbHeight, bestSplitLb); }
 
-  // Check if the state can be pruned with improved lower bound
-  if (states_[stateId].depth() + states_[stateId].lbHeight >=
-      states_[rootId_].ubHeight) {
+  // Check if the state can be pruned with updated lower bound
+  if (states_[stateId].depth() + states_[stateId].lbHeight >= states_[rootId_].ubHeight) {
     states_[stateId].lbHeight = MAX_DEPTH;
     states_[stateId].ubHeight = MAX_DEPTH;
     states_[stateId].isClosed = true;
@@ -491,8 +469,7 @@ void Dynprog::evaluateState(Index stateId, Index kSplits) {
   }
 
   // Check if the state can be pruned
-  if (states_[stateId].depth() + states_[stateId].lbHeight >=
-      states_[rootId_].ubHeight) {
+  if (states_[stateId].depth() + states_[stateId].lbHeight >= states_[rootId_].ubHeight) {
     states_[stateId].lbHeight = MAX_DEPTH;
     states_[stateId].ubHeight = MAX_DEPTH;
     states_[stateId].isClosed = true;
@@ -509,8 +486,7 @@ void Dynprog::evaluateState(Index stateId, Index kSplits) {
   // -------------------- State processing -------------------- //
 
   Index bestSplitLb = MAX_DEPTH;
-  for (Index splitPos = 0; splitPos < states_[stateId].splits.size();
-       ++splitPos) {
+  for (Index splitPos = 0; splitPos < states_[stateId].splits.size(); ++splitPos) {
     // Break if enough splits have been tested
     if (splitPos >= kSplits) { break; }
 
@@ -525,9 +501,14 @@ void Dynprog::evaluateState(Index stateId, Index kSplits) {
     for (Index i = 0; i < branchDirections_.size(); ++i) {
       Index childId = states_[stateId].splits[splitPos].childIds[i];
 
+      // Recover child id if needed
+      if (childId == INVALID_INDEX) {
+        childId = getOrCreateChildId(stateId, splitPos, branchDirections_[i]);
+        states_[stateId].splits[splitPos].childIds[i] = childId;
+      }
+
       // Update the split lower bound
-      lbHeightSplit =
-          std::max(lbHeightSplit, safeAdd(states_[childId].lbHeight));
+      lbHeightSplit = std::max(lbHeightSplit, safeAdd(states_[childId].lbHeight));
 
       // Check if the split can be pruned
       if (states_[stateId].depth() + lbHeightSplit >= states_[0].ubHeight) {
@@ -539,8 +520,7 @@ void Dynprog::evaluateState(Index stateId, Index kSplits) {
       evaluateState(childId, kSplits);
 
       // Update the split upper bound
-      ubHeightSplit =
-          std::max(ubHeightSplit, safeAdd(states_[childId].ubHeight));
+      ubHeightSplit = std::max(ubHeightSplit, safeAdd(states_[childId].ubHeight));
 
       // Break if the split cannot provide any improvement
       if (ubHeightSplit >= states_[stateId].ubHeight) { break; }
@@ -559,9 +539,7 @@ void Dynprog::evaluateState(Index stateId, Index kSplits) {
     }
 
     // Check if the split is optimal by matching bounds
-    if (lbHeightSplit == ubHeightSplit) {
-      states_[stateId].splits[splitPos].isClosed = true;
-    }
+    if (lbHeightSplit == ubHeightSplit) { states_[stateId].splits[splitPos].isClosed = true; }
   }
 
   // -------------------- State post-processing -------------------- //
@@ -592,12 +570,10 @@ void Dynprog::evaluateLowerBound(State& state) {
   Index base = branchDirections_.size();
 
   state.lbHeight =
-      static_cast<Index>(std::ceil(std::log(static_cast<double>(numFaces)) /
-                                   std::log(static_cast<double>(base))));
+      static_cast<Index>(std::ceil(std::log(static_cast<double>(numFaces)) / std::log(static_cast<double>(base))));
 }
 
-void Dynprog::evaluateScore(State& state, Split& split,
-                            const std::vector<Index>& childFaceCounts) {
+void Dynprog::evaluateScore(State& state, Split& split, const std::vector<Index>& childFaceCounts) {
   Index stateFaceCount = state.faceIds.size();
   Index numChildren = childFaceCounts.size();
 
@@ -640,15 +616,14 @@ void Dynprog::evaluateScore(State& state, Split& split,
     // Minimize maximum child height: lower is better
     case SplitScoring::MINMAX: {
       Index maxCount = 0;
-      for (Index count : childFaceCounts) {
-        maxCount = std::max(maxCount, count);
-      }
+      for (Index count : childFaceCounts) { maxCount = std::max(maxCount, count); }
       score = static_cast<double>(maxCount);
       break;
     }
 
     // Random scoring in [0,1)
     case SplitScoring::RANDOM: {
+      std::mt19937 rng_;
       std::uniform_real_distribution<double> dist(0.0, 1.0);
       score = dist(rng_);
       break;
@@ -667,29 +642,11 @@ void Dynprog::evaluateScore(State& state, Split& split,
   split.score = score;
 }
 
-void Dynprog::evaluateValidity(State& state, Split& split,
-                               bool externalStateCuts) {
-  // Try to infer feasibility based on filtering rules
-  if (params_.filterChecks) {
-    split.valid = inferValidity(state, split);
-    if (split.valid.has_value()) { return; }
-  }
-
-  // If filtering is not enabled or failed, perform full feasibility check
-  Cut splitCut = Cut(split.id, Relation::EQ);
-  if (!externalStateCuts) { feasibility_->add(state.region.cuts()); }
-  feasibility_->add(splitCut);
-  split.valid = feasibility_->check();
-  feasibility_->remove(splitCut);
-  if (!externalStateCuts) { feasibility_->remove(state.region.cuts()); }
-}
-
-bool Dynprog::checkChildFace(State& state, Split& split, Relation cutDir,
-                             Index faceId, bool externalChildCuts) {
+bool Dynprog::checkChildFace(const State& state, const Split& split, Relation cutDir, Index faceId,
+                             bool externalChildCuts) {
   // Try to infer whether the face is a child one based on filtering rules
   if (params_.filterChecks) {
-    std::optional<bool> isInferredChildFace =
-        inferChildFace(state, split, cutDir, faceId);
+    std::optional<bool> isInferredChildFace = inferChildFace(state, split, cutDir, faceId);
     if (isInferredChildFace.has_value()) { return isInferredChildFace.value(); }
   }
 
@@ -719,48 +676,7 @@ void Dynprog::updateStatus() {
   }
 }
 
-std::optional<bool> Dynprog::inferValidity(State& state, Split& split) {
-  // A split is certified valid if:
-  // - at least two children are non-empty (separation occurs)
-  // A split is certified invalid if:
-  // - at least one child has identical faces (no separation)
-
-  Index stateNumFaces = state.faceIds.size();
-  Index childNonempty = 0;
-  Index childIdentical = 0;
-
-  for (Index i = 0; i < branchDirections_.size(); ++i) {
-    Relation cutDir = branchDirections_[i];
-    Index childId = split.childIds[i];
-    Index childNumFaces = 0;
-
-    // Retrieve child number of faces either:
-    // - exactly from memoization
-    // - as an under-approximation by inferring face intersections
-    if (childId != INVALID_INDEX) {
-      childNumFaces = states_[childId].faceIds.size();
-    } else {
-      childNumFaces = 0;
-      for (Index faceId : state.faceIds) {
-        std::optional<bool> isEmpty =
-            inferChildFace(state, split, cutDir, faceId);
-        if (isEmpty.has_value() && isEmpty.value()) { childNumFaces += 1; }
-      }
-    }
-
-    if (childNumFaces > 0) { childNonempty += 1; }
-    if (childNumFaces == stateNumFaces) { childIdentical += 1; }
-
-    if (childNonempty >= 2) { return true; }
-    if (childIdentical >= 1) { return false; }
-  }
-
-  // Fallback: no inference possible
-  return std::nullopt;
-}
-
-std::optional<bool> Dynprog::inferChildFace(State& state, Split& split,
-                                            Relation cutDir, Index faceId) {
+std::optional<bool> Dynprog::inferChildFace(const State& state, const Split& split, Relation cutDir, Index faceId) {
   Relation position = positions_[faceId][split.id];
   const Cone& stateCone = state.region;
 
@@ -786,9 +702,7 @@ std::optional<bool> Dynprog::inferChildFace(State& state, Split& split,
     }
   } else if (cutDir == Relation::EQ) {
     if (stateCone.isOpen()) {
-      if (position == Relation::LT || position == Relation::GT) {
-        return false;
-      }
+      if (position == Relation::LT || position == Relation::GT) { return false; }
     }
   } else {
     throw std::invalid_argument("Unknown cut direction");
@@ -801,8 +715,7 @@ std::optional<bool> Dynprog::inferChildFace(State& state, Split& split,
   return std::nullopt;
 }
 
-bool Dynprog::childContainsFaceCenter(State& state, Split& split,
-                                      Relation cutDir, Index faceId) {
+bool Dynprog::childContainsFaceCenter(const State& state, const Split& split, Relation cutDir, Index faceId) {
   const Cone& childCone = state.region.refine(Cut(split.id, cutDir));
   const SimplexVector& faceCenter = voronoi_.point(faceId);
 
@@ -834,9 +747,7 @@ std::vector<Index> Dynprog::getIterationRange() const {
       break;
     case Exploration::ITERATIVE:
       iterationRange.reserve(voronoi_.numSplits());
-      for (Index k = 1; k <= voronoi_.numSplits(); ++k) {
-        iterationRange.push_back(k);
-      }
+      for (Index k = 1; k <= voronoi_.numSplits(); ++k) { iterationRange.push_back(k); }
       break;
     case Exploration::EXHAUSTIVE:
       iterationRange.push_back(voronoi_.numSplits());
@@ -848,8 +759,7 @@ std::vector<Index> Dynprog::getIterationRange() const {
 }
 
 bool Dynprog::checkTimeLimit() const {
-  double elapsed =
-      std::chrono::duration<double>(Clock::now() - startTime_).count();
+  double elapsed = std::chrono::duration<double>(Clock::now() - startTime_).count();
   return elapsed >= params_.timeLimit;
 }
 
@@ -875,22 +785,16 @@ void Dynprog::logHeader() const {
 
 void Dynprog::logProgress(const std::string& message) {
   if (!params_.verbose) { return; }
-  if (elapsedTime(checkTime_) < params_.logInterval && message.empty()) {
-    return;
-  }
+  if (elapsedTime(checkTime_) < params_.logInterval && message.empty()) { return; }
 
   checkTime_ = Clock::now();
 
   std::ostream& out = *(params_.outputStream);
   out << "  ";
-  out << std::setw(12) << std::fixed << std::setprecision(2)
-      << elapsedTime(startTime_);
+  out << std::setw(12) << std::fixed << std::setprecision(2) << elapsedTime(startTime_);
   out << std::setw(12) << stats_.numIters;
   out << std::setw(12) << states_[rootId_].lbHeight;
-  out << std::setw(12)
-      << (states_[rootId_].ubHeight == MAX_DEPTH
-              ? "inf"
-              : std::to_string(states_[rootId_].ubHeight));
+  out << std::setw(12) << (states_[rootId_].ubHeight == MAX_DEPTH ? "inf" : std::to_string(states_[rootId_].ubHeight));
   out << std::setw(12) << feasibility_->numSolve();
   out << std::setw(12) << states_.size();
   out << std::setw(12) << stats_.numStatesClosed;
@@ -913,8 +817,7 @@ void Dynprog::logFooter() const {
   if (!params_.verbose) return;
   std::ostream& out = *(params_.outputStream);
   out << std::string("  ") + std::string(9 * 12, '-') << "\n";
-  out << "  time: " << std::fixed << std::setprecision(4) << stats_.runTime
-      << "\n";
+  out << "  time: " << std::fixed << std::setprecision(4) << stats_.runTime << "\n";
 }
 
 }  // namespace treeco

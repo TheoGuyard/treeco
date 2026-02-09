@@ -117,9 +117,8 @@ TEST_F(DynprogTest, DifferentScoringStrategies) {
   Voronoi voronoi(smallPoints);
   voronoi.build();
 
-  std::vector<SplitScoring> strategies = {
-      SplitScoring::VARIANCE, SplitScoring::ENTROPY, SplitScoring::MINMAX,
-      SplitScoring::NONE, SplitScoring::RANDOM};
+  std::vector<SplitScoring> strategies = {SplitScoring::VARIANCE, SplitScoring::ENTROPY, SplitScoring::MINMAX,
+                                          SplitScoring::NONE, SplitScoring::RANDOM};
 
   Index baseDepth = MAX_DEPTH;
   for (auto strategy : strategies) {

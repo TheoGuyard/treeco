@@ -34,9 +34,7 @@ protected:
 // Constructor tests
 // ============================================================================
 
-TEST_F(FeasibilityTest, ConstructorValid) {
-  EXPECT_NO_THROW((Feasibility(pool2D)));
-}
+TEST_F(FeasibilityTest, ConstructorValid) { EXPECT_NO_THROW((Feasibility(pool2D))); }
 
 TEST_F(FeasibilityTest, ConstructorEmptyPool) {
   std::vector<TernaryVector> emptyPool;
@@ -370,9 +368,7 @@ TEST_F(FeasibilityTest, ManyAddsAndRemoves) {
   EXPECT_TRUE(feas.check());
 
   // Remove all
-  for (Index i = 0; i < pool2D.size(); ++i) {
-    feas.remove(Cut(i, Relation::GE));
-  }
+  for (Index i = 0; i < pool2D.size(); ++i) { feas.remove(Cut(i, Relation::GE)); }
   EXPECT_TRUE(feas.check());
 }
 

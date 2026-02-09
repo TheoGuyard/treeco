@@ -26,9 +26,7 @@ TEST_F(VoronoiTest, BasicConstruction) {
   EXPECT_EQ(voronoi.numFaces(), voronoi.numPoints());
 
   Index totalCuts = 0;
-  for (Index i = 0; i < voronoi.numFaces(); ++i) {
-    totalCuts += voronoi.face(i).cone.numCuts();
-  }
+  for (Index i = 0; i < voronoi.numFaces(); ++i) { totalCuts += voronoi.face(i).cone.numCuts(); }
   EXPECT_EQ(voronoi.numEdges(), totalCuts / 2);
 
   for (Index i = 0; i < voronoi.numSplits(); ++i) {
@@ -53,7 +51,5 @@ TEST_F(VoronoiTest, CellsMatchPoints) {
   Voronoi voronoi(points);
   voronoi.build();
 
-  for (Index i = 0; i < voronoi.numFaces(); ++i) {
-    EXPECT_EQ(voronoi.face(i).pointId, i);
-  }
+  for (Index i = 0; i < voronoi.numFaces(); ++i) { EXPECT_EQ(voronoi.face(i).pointId, i); }
 }

@@ -40,17 +40,13 @@ int main(int argc, char* argv[]) {
     if (!args.domainFile.empty()) {
       out << "Loading domain file: " << args.domainFile << "\n";
       domain = readDomain(args.domainFile);
-      out << "  dim constr: " << std::to_string(std::get<0>(domain[0]).size())
-          << "\n";
+      out << "  dim constr: " << std::to_string(std::get<0>(domain[0]).size()) << "\n";
       out << "  num constr: " << domain.size() << "\n";
 
       if (points[0].size() != std::get<0>(domain[0]).size()) {
-        std::string msg =
-            "Dimension mismatch between points and domain constraints.";
+        std::string msg = "Dimension mismatch between points and domain constraints.";
         msg += "  dim points: " + std::to_string(points[0].size()) + "\n";
-        msg +=
-            "  dim constr: " + std::to_string(std::get<0>(domain[0]).size()) +
-            "\n";
+        msg += "  dim constr: " + std::to_string(std::get<0>(domain[0]).size()) + "\n";
         throw std::runtime_error(msg);
       }
     }
@@ -82,10 +78,9 @@ int main(int argc, char* argv[]) {
 
     LDTree ldtree(points, domain);
 
-    ldtree.build(args.verbose, &out, args.logInterval, args.logSave,
-                 args.timeLimit, args.tolerance, args.deduplicate,
-                 args.useSlacks, args.filterChecks, args.exploration,
-                 args.branching, args.splitScoring);
+    ldtree.build(args.verbose, &out, args.logInterval, args.logSave, args.timeLimit, args.tolerance, args.deduplicate,
+                 args.useSlacks, args.strongChecks, args.filterChecks, args.exploration, args.branching,
+                 args.splitScoring);
 
     // ====================================================================
     // Perform queries
