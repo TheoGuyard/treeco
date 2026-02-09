@@ -48,23 +48,21 @@ enum class NodeType {
  * or a leaf node (with optimal solution points).
  */
 struct Node {
-  Index depth = INVALID_INDEX;          // Depth in the tree (0 = root)
-  NodeType type = NodeType::UNDEFINED;  // Node type
-  std::vector<Index> pointsIds = {};  // Solution point indices (only for LEAF)
-  Index splitId = INVALID_INDEX;      // Split hyperplane index (only for NODE)
-  std::vector<std::pair<Relation, Index>> children =
-      {};  // Child node direction and indices
+  Index depth = INVALID_INDEX;                            // Depth in the tree (0 = root)
+  NodeType type = NodeType::UNDEFINED;                    // Node type
+  std::vector<Index> pointsIds = {};                      // Solution point indices (only for LEAF)
+  Index splitId = INVALID_INDEX;                          // Split hyperplane index (only for NODE)
+  std::vector<std::pair<Relation, Index>> children = {};  // Child node direction and indices
 };
 
 /**
  * @brief Parameters for tree construction.
  */
 struct TreeParams {
-  bool verbose = false;                     // Enable verbose logging
-  std::ostream* outputStream = &std::cout;  // Output stream for logs
-  double logInterval = 5.0;                 // Logging interval in seconds
-  double timeLimit =
-      std::numeric_limits<double>::infinity();  // Time limit in seconds
+  bool verbose = false;                                        // Enable verbose logging
+  std::ostream* outputStream = &std::cout;                     // Output stream for logs
+  double logInterval = 5.0;                                    // Logging interval in seconds
+  double timeLimit = std::numeric_limits<double>::infinity();  // Time limit in seconds
 };
 
 /**
@@ -91,24 +89,16 @@ public:
   Tree() = default;
 
   /// Serialization constructor
-  Tree(const std::vector<Node>& nodes, const TreeParams& params,
-       const TreeStats& stats, Index rootId, Index size, Index width,
-       Index depth)
-    : nodes_(nodes)
-    , params_(params)
-    , stats_(stats)
-    , rootId_(rootId)
-    , size_(size)
-    , width_(width)
-    , depth_(depth) {}
+  Tree(const std::vector<Node>& nodes, const TreeParams& params, const TreeStats& stats, Index rootId, Index size,
+       Index width, Index depth)
+    : nodes_(nodes), params_(params), stats_(stats), rootId_(rootId), size_(size), width_(width), depth_(depth) {}
 
   /**
    * @brief Synthesize the tree from dynamic programming results.
    * @param dynprog The dynamic programming solver (must have run)
    * @param params Construction parameters
    */
-  void synthetize(const Dynprog& dynprog,
-                  const TreeParams& params = TreeParams());
+  void synthetize(const Dynprog& dynprog, const TreeParams& params = TreeParams());
 
   /// Clear the tree structure
   void clear();
@@ -158,11 +148,9 @@ private:
   Clock::time_point checkTime_;  // Last logging time
 
   Index addRoot(const std::vector<Index>& pointsIds, Index splitId);
-  Index addNode(Index parentId, Relation relation,
-                const std::vector<Index>& pointsIds, Index splitId);
+  Index addNode(Index parentId, Relation relation, const std::vector<Index>& pointsIds, Index splitId);
 
-  void pprintNode(const Node& node, const std::string& prefix,
-                  const std::string& label, bool last, bool tight_display,
+  void pprintNode(const Node& node, const std::string& prefix, const std::string& label, bool last, bool tight_display,
                   std::ostream* outputStream) const;
 
   void logHeader() const;

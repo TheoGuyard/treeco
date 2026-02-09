@@ -82,17 +82,14 @@ inline Relation stringToRelationType(const std::string& str) {
   if (str == "GT") return Relation::GT;
   if (str == "RT") return Relation::RT;
   if (str == "RF") return Relation::RF;
-  throw std::invalid_argument(
-      "Invalid relation type string: " + str +
-      ". Available options are: " + "LT, LE, EQ, GE, GT, RT, RF.");
+  throw std::invalid_argument("Invalid relation type string: " + str +
+                              ". Available options are: " + "LT, LE, EQ, GE, GT, RT, RF.");
 }
 
 /// Lookup table for reducing pairs of relations
 const std::map<std::set<Relation>, Relation> relationReductions = {
-    {{Relation::LT, Relation::LE}, Relation::LT},
-    {{Relation::LE, Relation::EQ}, Relation::EQ},
-    {{Relation::LE, Relation::GE}, Relation::EQ},
-    {{Relation::EQ, Relation::GE}, Relation::EQ},
+    {{Relation::LT, Relation::LE}, Relation::LT}, {{Relation::LE, Relation::EQ}, Relation::EQ},
+    {{Relation::LE, Relation::GE}, Relation::EQ}, {{Relation::EQ, Relation::GE}, Relation::EQ},
     {{Relation::GE, Relation::GT}, Relation::GT},
 };
 
@@ -125,8 +122,7 @@ inline Relation reduceRelationPair(Relation r1, Relation r2) {
  */
 inline Relation reduceRelations(const std::vector<Relation>& relations) {
   if (relations.empty()) return Relation::RT;
-  return std::accumulate(std::next(relations.begin()), relations.end(),
-                         relations.front(), reduceRelationPair);
+  return std::accumulate(std::next(relations.begin()), relations.end(), relations.front(), reduceRelationPair);
 }
 
 // ----------------------------------------------------------------------------
@@ -393,8 +389,7 @@ std::vector<SimplexVector> scaleBinarySet(const std::vector<BinaryVector>& X);
  * @param X Set of simplex vectors in {-1,+1}^n
  * @return Set of binary vectors in {0,1}^n
  */
-std::vector<SimplexVector> unscaleBinarySet(
-    const std::vector<SimplexVector>& X);
+std::vector<SimplexVector> unscaleBinarySet(const std::vector<SimplexVector>& X);
 
 }  // namespace treeco
 

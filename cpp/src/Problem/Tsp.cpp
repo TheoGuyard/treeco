@@ -3,9 +3,7 @@
 namespace treeco {
 
 Tsp::Tsp(Index numCities) : numCities_(numCities) {
-  if (numCities_ < 3) {
-    throw std::invalid_argument("Tsp: need at least 3 cities");
-  }
+  if (numCities_ < 3) { throw std::invalid_argument("Tsp: need at least 3 cities"); }
   dimension_ = numCities_ * (numCities_ - 1) / 2;
 }
 
@@ -30,9 +28,7 @@ std::vector<BinaryVector> Tsp::getFeasibleSet() const {
 
     BinaryVector tour(dimension_, 0);
     tour[edgeToIndex(0, perm[0])] = 1;
-    for (Index k = 0; k + 1 < perm.size(); ++k) {
-      tour[edgeToIndex(perm[k], perm[k + 1])] = 1;
-    }
+    for (Index k = 0; k + 1 < perm.size(); ++k) { tour[edgeToIndex(perm[k], perm[k + 1])] = 1; }
     tour[edgeToIndex(0, perm.back())] = 1;
     tours.push_back(std::move(tour));
   } while (std::next_permutation(perm.begin(), perm.end()));
@@ -48,9 +44,7 @@ RealVector Tsp::sampleCost(Index seed) const {
 
   // Sample random city positions in the unit 2d square
   std::vector<std::pair<double, double>> positions(numCities_);
-  for (Index i = 0; i < numCities_; ++i) {
-    positions[i] = {unif(gen), unif(gen)};
-  }
+  for (Index i = 0; i < numCities_; ++i) { positions[i] = {unif(gen), unif(gen)}; }
 
   // Compute opposite of distances as costs
   RealVector cost(dimension_, 0.0);

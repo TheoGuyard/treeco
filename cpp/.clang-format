@@ -20,7 +20,7 @@ AllowShortLoopsOnASingleLine: 			        true
 AllowShortFunctionsOnASingleLine: 		      All
 AlwaysBreakBeforeMultilineStrings: 		      false
 
-ColumnLimit:                                80
+ColumnLimit:                                120
 
 BreakConstructorInitializers: 			            BeforeComma
 ConstructorInitializerAllOnOneLineOrOnePerLine: true

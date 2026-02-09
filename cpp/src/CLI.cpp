@@ -28,8 +28,10 @@ Args parseArgs(int argc, char* argv[]) {
       args.tolerance = std::stod(argv[++i]);
     } else if (arg == "--no-deduplicate") {
       args.deduplicate = false;
-    } else if (arg == "--use-slacks") {
-      args.useSlacks = true;
+    } else if (arg == "--no-use-slacks") {
+      args.useSlacks = false;
+    } else if (arg == "--no-strong-checks") {
+      args.strongChecks = false;
     } else if (arg == "--no-filter-checks") {
       args.filterChecks = false;
     } else if (arg == "--exploration" && i + 1 < argc) {
@@ -66,8 +68,7 @@ void printUsage(const char* progName, std::ostream* outputStream) {
   out << "General parameters:\n";
   out << "  --verbose             Enable verbose output\n";
   out << "  --log-interval <sec>  Log interval in seconds (default: 5.0)\n";
-  out << "  --log-save            Save logs at each iteration (default: "
-         "true)\n";
+  out << "  --log-save            Save logs at each iteration (default: true)\n";
   out << "  --time-limit <sec>    Time limit in seconds (default: infinity)\n";
   out << "  --tolerance <value>   Tolerance for zero (default: 1e-8)\n";
   out << "\n";
@@ -75,17 +76,13 @@ void printUsage(const char* progName, std::ostream* outputStream) {
   out << "  --no-deduplicate      Disable point deduplication\n";
   out << "\n";
   out << "Dynamic programming parameters:\n";
-  out << "  --use-slacks              Use of slack variables in feasibility "
-         "checks\n";
+  out << "  --no-use-slacks           Disable use of slack variables in feasibility checks\n";
+  out << "  --no-strong-checks        Disable strong checks while building states\n";
   out << "  --no-filter-checks        Disable filter checks optimization\n";
-  out << "  --exploration <mode>      Exploration: greedy, iterative, "
-         "exhaustive (default: iterative)\n";
-  out << "  --branching <mode>        Branching: binary, ternary (default: "
-         "binary)\n";
-  out << "  --lower-bounding <mode>   Lower bounding: fixed, backtrack "
-         "(default: backtrack)\n";
-  out << "  --split-scoring <mode>    Split scoring: variance, entropy, "
-         "minmax, balance, none, random (default: variance)\n";
+  out << "  --exploration <mode>      Exploration: greedy, iterative, exhaustive (default: iterative)\n";
+  out << "  --branching <mode>        Branching: binary, ternary (default: binary)\n";
+  out << "  --lower-bounding <mode>   Lower bounding: fixed, backtrack (default: backtrack)\n";
+  out << "  --split-scoring <mode>    Split scoring: variance, minmax, balance, none, random (default: variance)\n";
   out << "\n";
   out << "Other:\n";
   out << "  --help                Show this help message\n";
